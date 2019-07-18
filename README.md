@@ -3,6 +3,7 @@
 Installing the package from R using:
 
 install.packages("devtools")
+
 library(devtools)
 
 devtools::install_github("dnieuw/ViromeBrowser", build_vignettes = TRUE)
