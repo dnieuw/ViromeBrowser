@@ -1,0 +1,34 @@
+Package: viromeBrowser
+Type: Package
+Title: Virome Sequencing Analysis Result Browser
+Version: 1.0.0
+Authors@R: person("David", "Nieuwenhuijse", email = "d.nieuwenhuijse@erasmusmc.nl", role = c("aut", "cre"))
+Description: Experiments in which highly complex virome sequencing data is generated are difficult to visualize and unpack for a person without programming experience. 
+    After processing of the raw sequencing data by a NGS processing pipeline the usual output consists of contigs in fasta format and an annotation file linking the 
+    contigs to a reference sequene. The virome analysis browser app imports an annotation file and a corresponding fasta file containing the annotatated contig sequences. 
+    It facilitates browsing of annotations in multiple files and allows users to select and export specific annotated sequences from the associated fasta files. Various
+    annotation quality thresholds can be set to filter contigs from the annotation files. Further inspection of selected contigs can be done in the form of automatic open
+    reading frame (ORF) detection. Separate contigs and/or separate ORFs can be downloaded in nucleotide or aminoacid format for further analysis.
+Depends:
+    R (>= 3.4)
+Imports:
+    shiny (>= 1.3.2),
+		shinyWidgets,
+		plyr,
+		ggplot2,
+		shinydashboard,
+		DT,
+		reshape,
+		rbokeh,
+		Biostrings,
+		Rsamtools,
+		data.table,
+		markdown,
+		stringr
+License: AGPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

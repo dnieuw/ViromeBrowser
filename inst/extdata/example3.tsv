@@ -1,0 +1,31 @@
+query	virus_family	length_contig	qlo	qhi	length_homol	frac_homol	qframe	id	evalue	target
+NODE_1_length_180763_cov_3.01209	Adenoviridae	180763	68156	68590	434	0	-1	36.6	1.54E-20	AAK00135_ORF2_Porcine_adenovirus_5
+NODE_172_length_2563_cov_0.636289	Adenoviridae	2563	2236	2556	320	0.12	-2	40.2	3.92E-12	YP_003933572_unnamed_protein_product_Turkey_adenovirus_1
+NODE_245_length_1956_cov_0.592674	Adenoviridae	1956	831	1286	455	0.23	-2	37.2	4.00E-18	AKN35169_dUTPase_Fowl_aviadenovirus_C
+NODE_442_length_1185_cov_0.555766	Adenoviridae	1185	257	643	386	0.33	2	39.5	2.46E-22	AAK00135_ORF2_Porcine_adenovirus_5
+NODE_42_length_8415_cov_1.56262	Adenoviridae	8415	3	3407	3404	0.4	3	99.6	0	AGT77379_DNA_polymerase_Human_mastadenovirus_D
+NODE_19_length_26539_cov_2.2065	Adenoviridae	26539	14252	17110	2858	0.11	-1	100	0	AHV83729_hexon_Human_mastadenovirus_D
+NODE_4972_length_310_cov_0.360656	Anelloviridae	310	3	308	305	0.98	3	94.1	2.63E-54	KT163895_Torque_teno_virus_isolate_P11_ORF1_gene_partial_cds_orf_1
+NODE_530_length_1075_cov_0.436709	Caliciviridae	1075	642	1058	416	0.39	-3	37	2.35E-20	BAE72466_RNA_dependent_RNA_polymerase_partial_Norovirus_HuKolkataV1370
+NODE_3_length_138033_cov_2.49702	Herpesviridae	138033	83538	83777	239	0	-2	48.8	4.20E-11	CAC84280_stpC_Saimiriine_herpesvirus_2
+NODE_10_length_52636_cov_1.5202	Herpesviridae	52636	289	492	203	0	-2	58.8	2.87E-16	P25050_RecName_FullSaimiri_transformationassociated_protein_AltName_FullCollagenlike_protein_AltName_FullstpC
+NODE_79_length_5180_cov_1.30239	Picobirnaviridae	5180	3815	4204	389	0.08	2	34.8	2.45E-11	ANS53890_ORF1_Picobirnavirus_wolfPRT1892015
+NODE_1_length_180763_cov_3.01209	Poxviridae	180763	68150	68497	347	0	-1	44.8	7.92E-19	ABU91686_dUTPase_Variola_virus
+NODE_89_length_4368_cov_1.12356	Poxviridae	4368	3560	3865	305	0.07	-3	31.5	1.53E-10	NP_064912_putative_ATPbinding_cassette_transporter_Amsacta_moorei_entomopoxvirus
+NODE_245_length_1956_cov_0.592674	Poxviridae	1956	834	1295	461	0.24	-2	36.8	1.93E-14	AKC03305_dUTPase_Bovine_papular_stomatitis_virus
+NODE_442_length_1185_cov_0.555766	Poxviridae	1185	254	643	389	0.33	2	43.8	6.72E-22	AKC03305_dUTPase_Bovine_papular_stomatitis_virus
+NODE_671_length_923_cov_0.286432	Poxviridae	923	12	881	869	0.94	-1	31.4	5.08E-27	ABQ43625_SERPINcrmA_ortholog_Tanapox_virus
+NODE_984_length_725_cov_0.459866	Poxviridae	725	5	541	536	0.74	2	31.1	5.58E-21	YP_009001498_putative_ATPbinding_cassette_transporter_Anomala_cuprea_entomopoxvirus
+NODE_1033_length_704_cov_0.280763	Poxviridae	704	2	385	383	0.54	-2	43.1	3.48E-27	YP_009177033_alkaline_phosphodiesterase_Turkeypox_virus
+NODE_1683_length_537_cov_0.37561	Poxviridae	537	6	287	281	0.52	-2	39.4	8.64E-13	AAT99858_unknown_Diachasmimorpha_longicaudata_entomopoxvirus
+NODE_1691_length_536_cov_0.378973	Poxviridae	536	14	535	521	0.97	2	32.2	1.67E-22	AAT99858_unknown_Diachasmimorpha_longicaudata_entomopoxvirus
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										

@@ -1,0 +1,41 @@
+query	virus_family	length_contig	qlo	qhi	length_homol	frac_homol	qframe	id	evalue	target
+NODE_99_length_4716_cov_0.523426	Adenoviridae	4716	3914	4333	419	0.09	2	46.2	7.44E-27	AOS87861_ORF1_Fowl_aviadenovirus_E
+NODE_510_length_877_cov_0.586667	Adenoviridae	877	43	429	386	0.44	-2	46.5	4.51E-24	AOC84054_ORF1_Fowl_aviadenovirus_E
+NODE_1447_length_449_cov_0.257764	Anelloviridae	449	5	436	431	0.96	-2	55.6	1.73E-46	NC_014086_Torque_teno_mini_virus_2_complete_genome_orf_5
+NODE_5_length_63097_cov_6.38004	Asfarviridae	63097	2	124	122	0	2	58.5	3.78E-10	AMQ11018_pB602L_partial_African_swine_fever_virus
+NODE_5_length_63097_cov_6.38004	Herpesviridae	63097	24152	24802	650	0.01	-1	37.8	7.05E-31	ALR87789_very_large_virion_protein_Bovine_herpesvirus_1
+NODE_1_length_290094_cov_3.3125	Herpesviridae	290094	193657	193959	302	0	1	31.4	5.09E-10	YP_009042050_putative_immediate_early_protein_Bovine_herpesvirus_6
+NODE_83_length_5455_cov_0.910098	Herpesviridae	5455	313	456	143	0.03	-2	72.9	9.88E-16	AIQ80674_large_tegument_protein_Bovine_herpesvirus_type_12_strain_B589
+NODE_376_length_1082_cov_0.579058	Parvoviridae	1082	16	1080	1064	0.98	1	50.7	1.53E-92	YP_009134734_viral_protein_Cherax_quadricarinatus_densovirus
+NODE_407_length_1009_cov_0.522676	Parvoviridae	1009	224	1006	782	0.78	-1	79.7	3.00E-130	YP_009134732_nonstructural_protein_1_Cherax_quadricarinatus_densovirus
+NODE_1221_length_500_cov_0.47185	Parvoviridae	500	4	393	389	0.78	-3	70.8	2.59E-53	YP_009134733_nonstructural_protein_2_Cherax_quadricarinatus_densovirus
+NODE_1393_length_460_cov_0.363363	Parvoviridae	460	3	458	455	0.99	3	38.9	3.62E-27	YP_009134731_nonstructural_protein_3_Cherax_quadricarinatus_densovirus
+NODE_2732_length_309_cov_0.412088	Parvoviridae	309	1	306	305	0.99	-1	65.7	2.89E-36	YP_009134734_viral_protein_Cherax_quadricarinatus_densovirus
+NODE_3306_length_278_cov_0.384106	Parvoviridae	278	4	207	203	0.73	1	58.3	1.29E-19	YP_009134734_viral_protein_Cherax_quadricarinatus_densovirus
+NODE_87_length_5301_cov_1.16042	Picobirnaviridae	5301	2860	3288	428	0.08	1	30.8	9.49E-11	ANS53890_ORF1_Picobirnavirus_wolfPRT1892015
+NODE_854_length_634_cov_0.380671	Picobirnaviridae	634	76	633	557	0.88	1	54.8	7.42E-52	AOW41968_capsid_protein_Picobirnavirus_sp
+NODE_306_length_1300_cov_0.359761	Picobirnaviridae	1300	9	1298	1289	0.99	-3	68.2	8.21E-184	AIY31288_putative_RNAdependent_RNA_polymerase_Dromedary_picobirnavirus
+NODE_52_length_7610_cov_18.6833	Picornaviridae	7610	1285	7608	6323	0.83	1	100	0	YP_009026376_polyprotein_Human_cosavirus
+NODE_5_length_63097_cov_6.38004	Poxviridae	63097	24152	24664	512	0.01	-1	40.8	2.80E-24	NP_044058_MC107L_Molluscum_contagiosum_virus_subtype_1
+NODE_83_length_5455_cov_0.910098	Poxviridae	5455	352	471	119	0.02	-2	72.5	1.44E-11	AKC03485_IMV_protein_VP55_Bovine_papular_stomatitis_virus
+NODE_99_length_4716_cov_0.523426	Poxviridae	4716	3944	4339	395	0.08	2	47	8.54E-25	AKC03305_dUTPase_Bovine_papular_stomatitis_virus
+NODE_510_length_877_cov_0.586667	Poxviridae	877	37	432	395	0.45	-2	45.5	6.12E-23	AKC03305_dUTPase_Bovine_papular_stomatitis_virus
+NODE_2285_length_340_cov_0.183099	Poxviridae	340	36	329	293	0.86	3	33	8.36E-12	ABZ80149_betaDglucuronidase_Vaccinia_virus_GLV1h68
+NODE_2823_length_303_cov_0.159091	Poxviridae	303	14	298	284	0.94	-3	36.1	2.57E-12	YP_009001498_putative_ATPbinding_cassette_transporter_Anomala_cuprea_entomopoxvirus
+NODE_510_length_877_cov_0.586667	RetroviridaenotHIV1	877	40	414	374	0.43	-2	43.8	1.12E-18	ABX25835_pol_protein_Feline_immunodeficiency_virus
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
+										
