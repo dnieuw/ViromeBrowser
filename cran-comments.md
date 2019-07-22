@@ -1,5 +1,5 @@
 ### Test environments
-* local Windows, R 3.6.1
+* local Windows 10, R 3.6.1
 * local ubuntu 14.04, R 3.4.1
 
 ### R CMD check results

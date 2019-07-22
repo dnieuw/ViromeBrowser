@@ -6,7 +6,7 @@ output:
   html_document:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Browsing Virome Sequencing Analysis Results}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,7 +24,7 @@ library(viromeBrowser)
 viromeBrowser()
 ```
 
-This will start the Shiny app server and will indicate from what local adress the app can be reached (e.g. `http://127.0.0.1:3838` by default)
+This will start the Shiny app server and will indicate from what local address the app can be reached (e.g. `http://127.0.0.1:3838` by default)
 Alternatively you can host the app at a specific IP-address and port by specifying the host and port parameters of the `viromeBrowser()` function.
 
 ### Loading data into the Virome Browser
