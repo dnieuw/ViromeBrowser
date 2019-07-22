@@ -1,44 +1,99 @@
-output$select.tax <- renderUI({
-		opts <- req(annotation_data())[,unique(annotation)]
-		selectizeInput("select.tax", "Select taxonomy to display:", opts,
-		selected = opts[1:10],
-		width= "100%",
-		multiple=TRUE)
-})
-
-annot.tax <- reactive({
-	req(input$select.tax)
-	annot <- annotation_data()[annotation%in%input$select.tax]
-	return(annot)
-})
-
-annot.heatmap.data <- eventReactive(input$table_rows_all,{
-  validate(
-    need(!is.null(annot.tax()),"Loading..."),
-    need(!is.null(input$table_rows_all), "Loading...")
+output$metadata_filter_selection <- renderUI({
+  pickerInput(
+    inputId = "metadata_filter_selection",
+    label = "Filter by:", 
+    choices = names(metadata()),
+    options =  list(
+      size = 5,
+      "live-search" = TRUE,
+      "max-options" = 9,
+      "max-options-text" = "Maximum filters reached"
+    ), 
+    multiple = TRUE
   )
-  selected_rows <- input$table_rows_all
+})
+
+output$metadata_stratify_selection <- renderUI({
+  pickerInput(
+    inputId = "metadata_stratify_selection",
+    label = "Stratify by:", 
+    choices = names(metadata()),
+    options =  list(
+      size = 5,
+      "live-search" = TRUE
+    ), 
+    multiple = FALSE
+  )
+})
+
+annot.heatmap.data <- eventReactive({annotation_data(); input$update_heatmap}, ignoreNULL = FALSE, {
+  validate(
+    need(!is.null(annotation_data()),"Loading..."),
+    need(!is.null(metadata()),"Loading...")
+  )
+
+  contig_data <- annotation_data()
   
-  annot_sub <- annot.tax()[selected_rows,]
+  #If no selection is made based on contig data set the default thresholds
+  if (input$contig_table_set_defaults) {
+    
+    #Initialize default values
+    sapply(names(default_values), function(name){
+      default <- default_values[[name]]
+
+      if (is.na(default[1])){
+        #Skip non-set defaults
+        return(NULL)
+      }
+      if(is.numeric(default)){
+        #It is a slider range
+        contig_data <<- contig_data[get(name)>default[1]&get(name)<default[2]]
+        return(NULL)
+      }
+      #It is a selection of factors/characters
+      contig_data <<- contig_data[get(name)%in%default]
+      return(NULL)
+    })
+  } else {
+    contig_data <- contig_data[input$contig_table_rows_all,]
+  }
   
-  return(annot_sub)
+  meta_data <- metadata()
+  
+  #If selection is made based on metadata apply filter
+  if (!is.null(input$metadata_filter_selection)) {
+    meta_data <- metadata()[input$metadata_table_rows_all,]
+  }
+  
+  merged_data <- merge(contig_data,meta_data, by='file.id')
+
+  return(merged_data)
 })
 
 #Heatmap based on selected input
 output$annot.heatmap <- renderRbokeh({
-	#Sum contig by file.id and annotation
-	plotdata <- req(annot.heatmap.data())[,.(N=length(unique(contig.id))),by=.(file.id,annotation)]
 	
-	x.axis <- annotation_data()[,unique(file.id)]
-	y.axis <- input$select.tax
+  x_axis <- req(input$metadata_stratify_selection)
+  y_axis <- "annotation"
+  
+  #Sum contig by stratification
+	plotdata <- annot.heatmap.data()[,.N, by=.(get(x_axis),get(y_axis))]
+	names(plotdata) <- c(x_axis, y_axis, 'N')
+	
+	x.axis <- annot.heatmap.data()[,unique(get(x_axis))]
+	y.axis <- annot.heatmap.data()[,unique(get(y_axis))]
+	
 	Contigs <- plotdata[,N]
+	
+	plotdata <- plotdata[order(get(x_axis),get(y_axis))]
+	
 	figure(width = 600, height = 600,
-	  xlab = "Filenames", ylab = "Annotation",
+	  xlab = x_axis, ylab = y_axis,
 		legend_location = NULL,
-		tools = c("box_select"),
+		tools = c("box_select", "save"),
 		toolbar_location = "above") %>%
 		theme_legend(background_fill_alpha = 0, border_line_alpha = 0) %>%
-		ly_crect(data = plotdata, x=file.id, y=annotation, color=Contigs, hover=list("File"=file.id,"Annotation"=annotation,"#Contigs"=N), lname = "rects") %>%
+		ly_crect(data = plotdata, x=get(x_axis), y=get(y_axis), color=Contigs, hover=list(x_axis=get(x_axis),y_axis=get(y_axis),"#Contigs"=N), lname = "rects") %>%
 		x_range(x.axis) %>%
 		theme_axis("x", major_label_orientation = 45) %>%
 		theme_grid("x", grid_line_alpha = 0) %>%
@@ -48,32 +103,63 @@ output$annot.heatmap <- renderRbokeh({
 		tool_box_select(callback = shiny_callback("heatmap.select"),ref_layer = "rects")
 })
 
-heatmap.selected <- reactive({
-  selected <- isolate(annot.heatmap.data())
-  selected <- selected[,.(N=length(unique(contig.id))),by=.(file.id,annotation)]
-	if (is.null(input$heatmap.select))
-		selected <- selected
-	else
-		selected <- selected[input$heatmap.select+1]
-	return(selected)
-})
-
 #Generate a table with contig info
-output$table <- DT::renderDataTable({
-  plotdata <- req(annot.tax()[,c("contig.length","length.homology","frac.homology","identity","evalue")])
+output$contig_table <- DT::renderDataTable({
+  validate(
+    need(!is.null(annotation_data()),"Loading...")
+  )
+  plotdata <- annotation_data()[,c(-1,-2), with=FALSE]
   DT::datatable(plotdata,
             filter = 'top',
-            selection = list(
-              mode = 'multiple',
-              selected = 1,
-              target = 'row'
-            ),
             options = list(
-              ordering=F,
-              dom = "ti",
+              dom = "t",
               pageLength = 0,
               sScrollY = "0px",
               autoWidth = TRUE
             )
   )
+})
+
+#Generate a table with metadata info
+output$metadata_table <- DT::renderDataTable({
+  validate(
+    need(!is.null(metadata()),"Loading...")
+  )
+  req(input$metadata_filter_selection)
+  plotdata <- metadata()[,input$metadata_filter_selection, with=F]
+  DT::datatable(plotdata,
+                filter = list(
+                  position = 'top', 
+                  clear = FALSE, 
+                  plain = TRUE),
+                options = list(
+                  dom = "t",
+                  pageLength = 0,
+                  sScrollY = "0px",
+                  autoWidth = TRUE,
+                  columnDefs = list(list(className = 'dt-left', targets = "_all"))
+                  )
+  )
+})
+
+#Selected fields from heatmap
+heatmap.selected <- reactive({
+  selection_data <- annot.heatmap.data()
+  
+  if (is.null(input$heatmap.select)) {
+    selected_rows <- selection_data
+    setkey(selected_rows, "contig.id")
+  } else {
+    x_axis <- req(input$metadata_stratify_selection)
+    y_axis <- "annotation"
+    
+    selected <- selection_data[,.N, by=.(get(x_axis),get(y_axis))]
+    names(selected) <- c(x_axis, y_axis, 'N')
+    selected <- selected[order(get(x_axis),get(y_axis))]
+    selected <- selected[input$heatmap.select+1]
+    
+    selected_rows <- selection_data[get(x_axis) %in% selected[[1]] & get(y_axis) %in% selected[[2]]]
+    setkey(selected_rows, "contig.id")
+  }
+  return(selected_rows)
 })

@@ -90,62 +90,18 @@ plot.slidingwindow <- function(sequence,winsize,type){
 	)
 }
 
-annotationTable <- function(input, output, session, datasubset, alldata) {
-  ns <- session$ns
-  
-	table.data <- reactive({
-
-		selected <- datasubset()
-		validate(need(!is.null(alldata()),message = "Loading..."))
-		annot <- alldata()[annotation%in%selected[,annotation] & file.id%in%selected[,file.id]]
-		setkey(annot,contig.id)
-		return(annot)
-	})
-	
-	#Generate a table with contig info
-	output$table <- DT::renderDataTable({
-		plotdata <- table.data()
-		DT::datatable(plotdata,
-			selection = list(
-	  		mode = 'multiple',
-	  		selected = 1,
-	  		target = 'row'
-	  	),
-	  	options = list(
-	  		ordering=F,
-	  		dom = "tip",
-	  		pageLength = 100,
-	  		scrollX = TRUE,
-	  		scrollY = 100,
-	  		sScrollY = "500px"
-	    )
-	  )
-	})
-  
-	proxy = DT::dataTableProxy('table')
-	
-	observeEvent(input$clearbutton, {
-	  proxy %>% DT::selectRows(NULL)
-	})
-	
-	get.selected <- reactive({
-		return(input$table_rows_selected)
-	})
-
-	return(list("table" = table.data, "selected" = get.selected))
-}
-
-annot <- callModule(annotationTable, "annot.table", heatmap.selected, annot.heatmap.data)
+annot <- callModule(annotationTable, "annot.table", heatmap.selected)
 
 get.contig.selected <- reactive({
-	selected <- annot$table()[annot$selected()]
-	validate(need(!nrow(selected)==0,message="Please select a contig to visualize"))
+  validate(need(!is.null(annot$selected()),message="Please select a contig to visualize"))
+  selected <- req(annot$table())[annot$selected()]
+  
 	return(selected)
 })
 
 output$select.contig.current <- renderUI({
 	selected <- get.contig.selected()
-	choices <- seq(selected[,contig.id])
+	choices <- seq(as.character(selected[,contig.id]))
 	names(choices) <- selected[,contig.id]
 
 	ui <- pickerInput(inputId = "current_contig",
@@ -164,8 +120,8 @@ get.contig.current <- reactive({
 
 get.contig.seq <- reactive({
 	current <- get.contig.current()
-	contigid <- current$contig.id
-	file <- current$file.id
+	contigid <- as.character(current$contig.id)
+	file <- as.character(current$file.id)
   
 	if (any(file == names(contig_data()))==FALSE) {
 	  showModal(modalDialog(title = "ERROR!",
@@ -178,7 +134,6 @@ get.contig.seq <- reactive({
 	fasta <- contig_data()[[file]]$fasta
 	idx <- contig_data()[[file]]$idx
 	
-
 	if (any(seqlevels(idx)==contigid)==FALSE) {
 	  showModal(modalDialog(title = "ERROR!",
 	              paste0("Could not find contig: ",contigid," in your fasta file"),
@@ -363,7 +318,7 @@ output$download.seqtype <- renderUI({
 
 output$downloadFasta <- downloadHandler(
 	filename = function() {
-		filename = paste("fasta", ".fa", sep='')
+		filename = paste("orfs", ".fa", sep='')
 	},
 	content = function(file) {
 		lapply(orf.collection$orfs, function(orf) {
@@ -382,12 +337,21 @@ output$downloadFasta <- downloadHandler(
 
 output$downloadContig <- downloadHandler(
 	filename = function() {
-		filename = paste("fasta", ".fa", sep='')
+		filename = paste("selected_contigs", ".fasta", sep='')
 	},
 	content = function(file) {
-	  selected <- get.contig.selected()
+
+	  selected <- tryCatch(get.contig.selected(), error = function(x) {return(NULL)})
 	  
-	  if (any(selected$file.id%in%names(contig_data()))==FALSE) {
+	  if (is.null(selected)) {
+	    showModal(modalDialog(title = "ERROR!",
+	                          "No contigs selected",
+	                          easyClose = T,
+	                          footer = NULL))
+	    return(NULL)
+	  }
+	  
+	  if (any(as.character(selected$file.id)%in%names(contig_data()))==FALSE) {
 	    showModal(modalDialog(title = "ERROR!",
 	                          paste0("Could not find a fasta file for: ",file),
 	                          easyClose = T,
@@ -397,8 +361,8 @@ output$downloadContig <- downloadHandler(
 	  
 	  apply(selected, 1, function(current){
 	    
-  	  contigid <- current['contig.id']
-  	  fafile <- current['file.id']
+  	  contigid <- as.character(current['contig.id'])
+  	  fafile <- as.character(current['file.id'])
   	  
   	  fasta <- contig_data()[[fafile]]$fasta
   	  idx <- contig_data()[[fafile]]$idx
@@ -419,4 +383,54 @@ output$downloadContig <- downloadHandler(
   	  writeXStringSet(contig,file,append=T)
 	  })
 	}
+)
+
+output$downloadAllContig <- downloadHandler(
+  filename = function() {
+    filename = paste("all_contigs", ".fasta", sep='')
+  },
+  content = function(file) {
+    
+    selected <- annot$table()
+    
+    if (nrow(selected)==0) {
+      showModal(modalDialog(title = "ERROR!",
+                            "No contigs selected",
+                            easyClose = T,
+                            footer = NULL))
+      return(NULL)
+    }
+    
+    if (any(as.character(selected$file.id)%in%names(contig_data()))==FALSE) {
+      showModal(modalDialog(title = "ERROR!",
+                            paste0("Could not find a fasta file for: ",file),
+                            easyClose = T,
+                            footer = NULL))
+      return(NULL)
+    }
+    
+    apply(selected, 1, function(current){
+      
+      contigid <- as.character(current['contig.id'])
+      fafile <- as.character(current['file.id'])
+      
+      fasta <- contig_data()[[fafile]]$fasta
+      idx <- contig_data()[[fafile]]$idx
+      
+      if (any(seqlevels(idx)==contigid)==FALSE) {
+        showModal(modalDialog(title = "ERROR!",
+                              paste0("Could not find contig: ",contigid," in your fasta file"),
+                              easyClose = T,
+                              footer = NULL))
+        return(NULL)
+      }
+      
+      loc <- idx[seqlevels(idx)==contigid]
+      
+      contig <- scanFa(fasta, param=loc)[[1]]
+      contig <- DNAStringSet(contig)
+      names(contig) <- contigid
+      writeXStringSet(contig,file,append=T)
+    })
+  }
 )

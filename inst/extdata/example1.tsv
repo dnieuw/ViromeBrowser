@@ -1,9 +1,8 @@
-query	virus_family	length_contig	qlo	qhi	length_homol	frac_homol	qframe	id	evalue	target
-NODE_4_length_83189_cov_21.7892	Herpesviridae	83189	8883	9185	302	0	3	41.3	2.91E-19	CAC84343_hypothetical_protein_Saimiriine_herpesvirus_2
-NODE_6_length_27894_cov_2.58958	Herpesviridae	27894	21454	21660	206	0.01	1	58	3.29E-16	CAC84280_stpC_Saimiriine_herpesvirus_2
-NODE_68_length_1521_cov_0.388809	Herpesviridae	1521	544	705	161	0.11	-1	66.7	6.19E-16	CAC84280_stpC_Saimiriine_herpesvirus_2
-NODE_829_length_337_cov_0.314286	Herpesviridae	337	16	279	263	0.78	-2	39.8	8.04E-11	AII80915_uracilDNA_glycosylase_Equid_herpesvirus_1
-NODE_1342_length_145_cov_4.77778	Herpesviridae	145	3	143	140	0.97	-3	65.3	1.97E-10	AHM96085_large_tegument_protein_Papiine_herpesvirus_2
-NODE_176_length_758_cov_0.386688	Picornaviridae	758	129	758	629	0.83	-1	98.6	4.80E-111	ADN52312_polyprotein_Aichi_virus_1
-NODE_330_length_499_cov_0.397849	Picornaviridae	499	2	490	488	0.98	-1	98.2	5.70E-91	ADN52311_polyprotein_Aichi_virus_1
-NODE_18_length_6738_cov_4.82166	Poxviridae	6738	2441	3061	620	0.09	2	30.9	4.74E-25	YP_009001498_putative_ATPbinding_cassette_transporter_Anomala_cuprea_entomopoxvirus
+contig.id	annotation	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
+Contig1	Herpesviridae	145	3	143	140	0.97	-3	65.3	1.94984E-10	AHM96085_large_tegument_protein_Papiine_herpesvirus_2
+Contig2	Picornaviridae	758	129	758	629	0.83	-1	98.6	4.7863E-111	ADN52312_polyprotein_Aichi_virus_1
+Contig3	Picornaviridae	499	2	490	488	0.98	-1	98.2	5.7544E-91	ADN52311_polyprotein_Aichi_virus_1
+Contig4	Herpesviridae	83189	8883	9185	302	0	3	41.3	2.88403E-19	CAC84343_hypothetical_protein_Saimiriine_herpesvirus_2
+Contig5	Herpesviridae	27894	21454	21660	206	0.01	1	58	3.31131E-16	CAC84280_stpC_Saimiriine_herpesvirus_2
+Contig6	Herpesviridae	1521	544	705	161	0.11	-1	66.7	6.16595E-16	CAC84280_stpC_Saimiriine_herpesvirus_2
+Contig7	Herpesviridae	337	16	279	263	0.78	-2	39.8	8.12831E-11	AII80915_uracilDNA_glycosylase_Equid_herpesvirus_1

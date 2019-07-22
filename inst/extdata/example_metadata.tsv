@@ -1,0 +1,6 @@
+file	Patient_ID	Sex	Age	Sampling_date	Outcome	Country_of_origin
+example1	Patient-1	Male	20	2/4/2019	recovered	Netherlands
+example2	Patient-2	Female	20	2/4/2019	recovered	France
+example3	Patient-3	Female	25	3/4/2019	recovered	Germany
+example4	Patient-4	Male	25	3/4/2019	deceased	France
+						

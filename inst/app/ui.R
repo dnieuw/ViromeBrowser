@@ -9,37 +9,46 @@ dataimport.tab <- tabItem(
 heatmap.tab <- tabItem(
 	tabName = "heatmap",
 	fluidPage(
-		fluidRow(
-			box(width = 12,
-				uiOutput("select.tax")
-			)
-		),
-		fluidRow(
-		  box(width = 12,
-		    DT::dataTableOutput("table")
-		  )
-		),
+	  fluidRow(
+	    box(width = 12, solidHeader = T, title = "Browsing Settings", status = "primary" ,
+	     fluidRow(
+	       column(2,
+            box(width=12,
+                uiOutput("metadata_filter_selection"),
+                uiOutput("metadata_stratify_selection"),
+                actionButton("update_heatmap",
+                             icon = icon("chart-bar"),
+                             label = "Apply filters")
+            )
+	       ),
+	       column(10,
+	        DT::dataTableOutput("metadata_table")
+	       )
+	      )
+	    )
+	  ),
 		fluidRow(
 		  box(width=12,
   		  column(12, align="center",
-          rbokehOutput("annot.heatmap", width = "50%", height = "600px")
+          withSpinner(rbokehOutput("annot.heatmap", width = "50%", height = "800px"))
   		  )
   		)
+		),
+		fluidRow(
+		  box(width = 12, solidHeader = T, title = "Advanced settings", 
+		      collapsible = T, collapsed = T, status = "warning",
+		      prettySwitch(
+		        inputId = "contig_table_set_defaults",
+		        label = "Use default filters", 
+		        status = "danger",
+		        fill = TRUE,
+		        value = TRUE
+		      ),
+		      DT::dataTableOutput("contig_table", width = "100%")
+		  )
 		)
 	)
 )
-#####
-
-#Annotation table tab#####
-annotationTableOutput <- function(id) {
-	ns <- NS(id)
-	fluidPage(
-		box(width = 12,
-			DT::dataTableOutput(ns("table")),
-			actionButton(ns("clearbutton"), "Clear selection")
-		)
-	)
-}
 #####
 
 #Seqinfo tab#####
@@ -47,12 +56,13 @@ seqinfo.tab <- tabItem(
 	tabName = "seqinfo",
 	fluidRow(
   	tabBox(width = 12,
-  		tabPanel(title = "Annotation table",
+  		tabPanel(title = "Annotation Table",
   			annotationTableOutput("annot.table"),
-  			downloadButton("downloadContig", "Download Selected")
+		    downloadButton("downloadContig", "Download Selected"),
+		    downloadButton("downloadAllContig", "Download All")
   		),
   		###
-  		tabPanel(title = "Contig information",
+  		tabPanel(title = "Contig Information",
   			fluidPage(
   				fluidRow(
   					box(status = "primary",
@@ -79,7 +89,7 @@ seqinfo.tab <- tabItem(
   			)
   		),
   		###
-  		tabPanel(title = "ORF information",
+  		tabPanel(title = "ORF Information",
   			fluidPage(
   				fluidRow(
   					box(status = "primary",
@@ -108,7 +118,7 @@ seqinfo.tab <- tabItem(
   			)
   		),
   		###
-  		tabPanel(title = "Sequence collection table",
+  		tabPanel(title = "ORF Collection Table",
   			fluidPage(
   				fluidRow(
   					box(status = "primary",
@@ -143,12 +153,20 @@ body <- dashboardBody(
 )
 
 sidebar <- dashboardSidebar(
+  a(href = "https://github.com/dnieuw/ViromeBrowser", target = "_blank", img(src="ViromeBrowser_logo.svg", align = "middle", width="100%")),
   sidebarMenu(id = "sidebar",
     menuItemOutput("importdata"),
     menuItemOutput("heatmap"),
     menuItemOutput("seqinfo")
+  ),
+  tags$footer(
+    a(href = "https://www.compare-europe.eu/", target = "_blank", img(src="COMPARE_logo.png", width = "100%")),
+    style=paste0("position:absolute; align: center; bottom:0px; width:100%; height:",
+                 "110px", "; color: white; padding: 5px;")
   )
 )
+
+
 
 dashboardPage(skin = "green",
               dashboardHeader(title = "ViromeBrowser"),
