@@ -1,11 +1,7 @@
 ## Resubmission
 This is a resubmission. In this version I have:
 
-* Explained all acronyms in the description field.
-
-* Not added extra references to the description file as no references to other methods are needed.
-
-* Fixed the example code by adding /donttest and uncommenting the actual code.
+* Updated the documentation
   
 ### Test environments
 * local Windows 10, R 3.6.1

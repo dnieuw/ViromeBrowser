@@ -6,7 +6,6 @@
 #' @import shiny
 #' @import ggplot2
 #' @import shinydashboard
-#' @import DT
 #' @import rbokeh
 #' @import Biostrings
 #' @import Rsamtools
@@ -14,6 +13,7 @@
 #' @import markdown
 #' @import shinyWidgets
 #' @import stringr
+#' @import shinycssloaders
 #' @export
 #' @param host The host ip address, 127.0.0.1 or "localhost" by default.
 #' @param port The host port, 3838 by default.
