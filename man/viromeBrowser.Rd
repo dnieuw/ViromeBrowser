@@ -25,6 +25,7 @@ viromeBrowser()
 }
 
 \examples{
-## Not run: 
-#viromeBrowser()
+\donttest{
+viromeBrowser()
+}
 }
