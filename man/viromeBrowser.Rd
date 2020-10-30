@@ -3,11 +3,12 @@
 \docType{package}
 \name{viromeBrowser}
 \alias{viromeBrowser}
-\alias{viromeBrowser-package}
 \title{Launch the Virome Browser}
 \usage{
-viromeBrowser(host = getOption("shiny.host", "127.0.0.1"),
-  port = getOption("shiny.port", 3838))
+viromeBrowser(
+  host = getOption("shiny.host", "127.0.0.1"),
+  port = getOption("shiny.port", 3838)
+)
 }
 \arguments{
 \item{host}{The host ip address, 127.0.0.1 or "localhost" by default.}
