@@ -1,7 +1,7 @@
 #Import data tab#####
 dataimport.tab <- tabItem(
   tabName = "dataimport",
-  importFilesOutput("EBI")
+  importFilesOutput("import")
 )
 #####
 
@@ -16,13 +16,14 @@ heatmap.tab <- tabItem(
             box(width=12,
                 uiOutput("metadata_filter_selection"),
                 uiOutput("metadata_stratify_selection"),
+                uiOutput("annotation_stratify_selection"),
                 actionButton("update_heatmap",
                              icon = icon("chart-bar"),
                              label = "Apply filters")
             )
 	       ),
 	       column(10,
-	        DT::dataTableOutput("metadata_table")
+	        dataTableOutput("metadata_table")
 	       )
 	      )
 	    )
@@ -44,7 +45,7 @@ heatmap.tab <- tabItem(
 		        fill = TRUE,
 		        value = TRUE
 		      ),
-		      DT::dataTableOutput("contig_table", width = "100%")
+		      dataTableOutput("contig_table", width = "100%")
 		  )
 		)
 	)
@@ -124,7 +125,7 @@ seqinfo.tab <- tabItem(
   					box(status = "primary",
   						width = 12,
   						solidHeader = T,
-  						DT::dataTableOutput("orf.collection.table"),
+  						dataTableOutput("orf.collection.table"),
   						uiOutput("download.seqtype"),
   						downloadButton('downloadFasta', 'Download Fasta'),
   						actionButton("clear.orf","Clear Collection")
