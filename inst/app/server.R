@@ -1,6 +1,6 @@
 shinyServer(function(input, output, session) {
 	
-	importdata <- callModule(importFiles, "EBI")
+	importdata <- callModule(importFiles, "import")
 
 	annotation_data <- importdata$annot
 	default_values <- importdata$defaults
