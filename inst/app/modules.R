@@ -12,12 +12,6 @@ importFilesOutput <- function(id){
               uiOutput(ns("contig_file"))
             ),
             box(width = 12,
-              selectInput(inputId = ns("load.data.func"),
-                label = "Select annotation type:",
-                # Currently there is only a function for importing BLAST files
-                choices = c("BLAST format"="blast.data"),
-                selected = "blast.data"
-              ),
               actionButton(ns("load_data"), "Load Data"),
               br(),br(),
               prettySwitch(
@@ -72,9 +66,9 @@ importFiles <- function(input, output, session){
               multiple = F)
   })
   
-  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$load.data.func), reactive(input$load_data), reactive(input$load_example))
-  contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load.data.func), reactive(input$load_data), reactive(input$load_example))
-  metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load.data.func), reactive(input$load_data), reactive(input$load_example))
+  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$load_data), reactive(input$load_example))
+  contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(input$load_example))
+  metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(input$load_example))
   
   return(list("annot" = annot$data, "defaults" = annot$defaults, "contig" = contig, "metadata" = metadata))
 }
@@ -83,27 +77,29 @@ importFiles <- function(input, output, session){
 importAnnotationOutput <- function(id){
   ns <- NS(id)
   fluidPage(
-    box(title = "Annotation files", solidHeader = T, status = "primary", width = NULL,
-        DT::dataTableOutput(ns("example")),
+    column(4,
+      box(title = "Annotation configuration", solidHeader = T, status = "primary", width = NULL,
+        rHandsontableOutput(ns("import_config_table"), width="100%"),
+        footer = "Please select which columns correspont to which annotations in the table below"
+      )
+    ),
+    column(8,
+      box(title = "Annotation files", solidHeader = T, status = "primary", width = NULL,
+        dataTableOutput(ns("example")),
         footer = "The first line of each imported and parsed file is shown"
+      )
     )
   )
 }
 
 #callModule function
-importAnnotation <- function(input, output, session, annot_file, load.data.func, load.data, exampledata){
+importAnnotation <- function(input, output, session, annot_file, load.data, exampledata){
   
   #Reactive event for loading tsv data
   imported.data <- eventReactive(load.data(),{
     if (exampledata() == FALSE){
       req(annot_file())
-    }
-    
-    return(get(load.data.func())())
-  })
-  
-  #Custom data import function for slim output
-  blast.data <- reactive({
+    } 
     
     examplefiles <- function() {
       example_names <- c("example1.tsv","example2.tsv","example3.tsv","example4.tsv")
@@ -114,16 +110,15 @@ importAnnotation <- function(input, output, session, annot_file, load.data.func,
     
     # Create a Progress object
     progress <- shiny::Progress$new()
-    progress$set(message = "Loading BLAST annotation files", value = 0)
+    progress$set(message = "Loading annotation files", value = 0)
     on.exit(progress$close())
     
-    if(exampledata()==TRUE) {
-      #Load the example file names if we want to load the example data
-      file_data <- examplefiles()
-    } else {
+    if (exampledata() == FALSE){
       file_data <- annot_file()
+    } else {
+      file_data <- examplefiles()
     }
-    
+
     n <- nrow(file_data)
     
     data <- apply(file_data, 1, function(file){
@@ -134,53 +129,187 @@ importAnnotation <- function(input, output, session, annot_file, load.data.func,
     })
     
     data <- rbindlist(data)
-
-    names(data) <- c("contig.id","annotation","contig.length","hit.start","hit.end","length.homology","frac.homology","qframe", "identity","evalue","target","file.id")
     
-    data[,contig.id := as.factor(contig.id)]
-    data[,annotation := as.factor(annotation)]
-    data[,contig.length := as.numeric(contig.length)]
-    data[,hit.start := as.numeric(hit.start)]
-    data[,hit.end := as.numeric(hit.end)]
-    data[,length.homology := as.numeric(length.homology)]
-    data[,frac.homology := as.numeric(frac.homology)]
-    data[,qframe := as.factor(qframe)]
-    data[,identity := as.numeric(identity)]
-    data[,evalue := -log10(as.numeric(evalue))]
-    data[is.infinite(evalue) & sign(evalue) == 1, evalue := 999]
-    data[is.infinite(evalue) & sign(evalue) == 1, evalue := 0]
-    data[,"evalue(-log10)" := round(evalue, 2)]
-    data[,evalue:=NULL]
-    data[,target := as.factor(target)]
-    data[,file.id := as.factor(file.id)]
-    
-    data <- data[,c("file.id","contig.id","annotation","contig.length","hit.start","hit.end","length.homology","frac.homology","qframe","identity","evalue(-log10)","target")]
-
     return(data)
   })
   
-  #Table output of first line of each imported file
-  output$example <- DT::renderDataTable({
+  #Generate a table to select which columns represent what data to import
+  output$import_config_table <- renderRHandsontable({
     req(imported.data())
-    #Group data by file.id and show first entry per file
-    DT::datatable(imported.data()[, .SD[1, ], by = .(file.id)],
-              rownames = FALSE,
-              options = list(
-                dom = "tip",
-                pageLength = 15,
-                scrollX = TRUE,
-                sScrollY = "650px"
-              )
-    )
+    
+    #Create a dataframe with all annotation data that can be imported and the column names from the imported data
+    #Users can select which column in the input contains which annoation data
+    input_options <- factor("NotAvailable",levels=c("NotAvailable", colnames(imported.data())))
+    selection_df <- data.frame(column=rep(input_options, 17), 
+                               row.names = c("contig.id",
+                                    "superkingdom",
+                                    "kingdom",
+                                    "class",
+                                    "order",
+                                    "family",
+                                    "genus",
+                                    "species",
+                                    "taxonomic_name",
+                                    "contig.length",
+                                    "hit.start",
+                                    "hit.end",
+                                    "length.homology",
+                                    "frac.homology",
+                                    "identity",
+                                    "evalue",
+                                    "target"))
+    
+    rhandsontable(selection_df,
+                  colHeaders = FALSE,
+                  rowHeaderWidth = 150,
+                  stretchH = "all"
+                  )
   })
   
-  default_threshold_values <- list("file.id"=NA, "contig.id"=NA, "annotation"=NA,
-                         "contig.length"=c(500,Inf),"hit.start"=NA,"hit.end"=NA,
-                         "length.homology"=c(500,Inf),"frac.homology"=NA,"identity"=c(90,Inf),
-                         "evalue(-log10)"=NA,"target"=NA)
+  output$example <- renderDataTable({
+    req(configured_data())
+    
+    #Group data by file.id and show first entry per file
+    datatable(configured_data()[,.SD[1], by=file.id],
+                  rownames = FALSE,
+                  options = list(
+                    dom = "tip",
+                    pageLength = 15,
+                    scrollX = TRUE,
+                    sScrollY = "650px"
+                  )
+    )
+    
+  })
+  
+  configured_data <- reactive({
+    
+    if (exampledata() == FALSE){
+      req(input$import_config_table)
+      config <- as.data.table(hot_to_r(input$import_config_table), keep.rownames = T)
+      colnames(config) <- c("rn","column")
+      
+      #Dont show anything if all columns are excluded
+      if (config[,all(column=="NotAvailable")]) {
+        return(NULL)
+      }
+      
+      input_columns <- config[column!="NotAvailable",as.character(column)]
+      annotation_config <- config[column!="NotAvailable",rn]
+      
+      data <- imported.data()
+      data <- data[,c("file.id",input_columns), with=F]
+      
+      colnames(data) <- c("file.id", annotation_config)
+    } else {
+      data <- imported.data()
+    }
+
+    #Reformat the annotation columns if present
+    sapply(colnames(data), switch,
+      contig.id = {
+        data[,contig.id := as.factor(contig.id)]
+      },
+      superkingdom = {
+        data[,superkingdom := as.factor(superkingdom)]
+      },
+      kingdom = {
+        data[,kingdom := as.factor(kingdom)]
+      },
+      class = {
+        data[,class := as.factor(class)]
+      },
+      order = {
+        data[,order := as.factor(order)]
+      },
+      family = {
+        data[,family := as.factor(family)]
+      },
+      genus = {
+        data[,genus := as.factor(genus)]
+      },
+      species = {
+        data[,species := as.factor(species)]
+      },
+      taxonomic_name = {
+        data[,taxonomic_name := as.factor(taxonomic_name)]
+      },
+      contig.length = {
+        data[,contig.length := as.numeric(contig.length)]
+      },
+      hit.start = {
+        data[,hit.start := as.numeric(hit.start)]
+      },
+      hit.end = {
+        data[,hit.end := as.numeric(hit.end)]
+      },
+      length.homology = {
+        data[,length.homology := as.numeric(length.homology)]
+      },
+      frac.homology = {
+        data[,frac.homology := as.numeric(frac.homology)]
+      },
+      identity = {
+        data[,identity := as.numeric(identity)]
+      },
+      evalue = {
+        data[,evalue := -log10(as.numeric(evalue))]
+        data[is.infinite(evalue) & sign(evalue) == 1, evalue := 999]
+        data[is.infinite(evalue) & sign(evalue) == 1, evalue := 0]
+        data[,"evalue(-log10)" := round(evalue, 2)]
+        data[,evalue:=NULL]
+      },
+      target = {
+        data[,target := as.factor(target)]
+      },
+      file.id = {
+        data[,file.id := as.factor(file.id)]
+      }
+    )
+    
+    return(data)
+    
+  })
+  
+  default_threshold_values <- reactive({
+
+    req(configured_data())
+    
+    thresholds <- NULL
+    
+    #Set the default thresholds for annotation columns if present
+    sapply(colnames(data), switch,
+           contig.id = {
+             thresholds["file.id"]=NA
+           },
+           contig.length = {
+             thresholds["contig.length"]=c(500,Inf)
+           },
+           length.homology = {
+             thresholds["length.homology"]=c(500,Inf)
+           },
+           frac.homology = {
+             thresholds["frac.homology"]=NA
+           },
+           identity = {
+             thresholds["identity"]=c(90,Inf)
+           },
+           "evalue(-log10)" = {
+             thresholds["evalue(-log10)"]=NA
+           },
+           target = {
+             thresholds["target"]=NA
+           },
+           file.id = {
+             thresholds["file.id"]=NA
+           })
+    
+    return(thresholds)
+    
+  })
   
   #Return the imported data
-  return(list("data" = imported.data, "defaults" = default_threshold_values))
+  return(list("data" = configured_data, "defaults" = default_threshold_values))
 }
 
 #GUI
@@ -188,26 +317,20 @@ importContigOutput <- function(id){
   ns <- NS(id)
   fluidPage(
     box(title = "Contig files", solidHeader = T, status = "primary", width = NULL,
-        DT::dataTableOutput(ns("example")),
+        dataTableOutput(ns("example")),
         footer = "The first contig of each imported and parsed file is shown"
     )
   )
 }
 
 #CallModule function
-importContig <- function(input, output, session, contig_file, load.data.func, load.data, exampledata){
+importContig <- function(input, output, session, contig_file, load.data, exampledata){
   
   #Reactive event for loading contig data
   imported.fasta <- eventReactive(load.data(),{
     if (exampledata() == FALSE){
       req(contig_file())
     }
-
-    return(get(load.data.func())())
-  })
-  
-  #Custom data import function for blast output
-  blast.data <- reactive({
     
     examplefiles <- function() {
       example_names <- c("example1.fasta","example2.fasta","example3.fasta","example4.fasta")
@@ -245,7 +368,7 @@ importContig <- function(input, output, session, contig_file, load.data.func, lo
     return(data)
   })
   
-  output$example <- DT::renderDataTable({
+  output$example <- renderDataTable({
     data <-	req(imported.fasta())
     printdata <- lapply(seq_along(data), function(n){
       contig.example <- scanFa(data[[n]]$fasta, param=data[[n]]$idx[1])
@@ -255,7 +378,7 @@ importContig <- function(input, output, session, contig_file, load.data.func, lo
       data.table("file.id"=file.id, "contig.id"=contig.id, "contig.seq"=contig.seq)
     })
     printdata <- rbindlist(printdata)
-    DT::datatable(printdata,
+    datatable(printdata,
               rownames = FALSE,
               options = list(
                 dom = "tip",
@@ -274,25 +397,19 @@ importMetadataOutput <- function(id){
   ns <- NS(id)
   fluidPage(
     box(title = "Metadata", solidHeader = T, status = "primary", width = NULL,
-        DT::dataTableOutput(ns("example"))
+        dataTableOutput(ns("example"))
     )
   )
 }
 
 #CallModule function
-importMetadata <- function(input, output, session, metadata_file, load.data.func, load.data, exampledata){
+importMetadata <- function(input, output, session, metadata_file, load.data, exampledata){
   
   #Reactive event for loading metadata data
   imported.metadata <- eventReactive(load.data(),{
     if (exampledata() == FALSE){
       req(metadata_file())
     }
-    
-    return(get(load.data.func())())
-  })
-  
-  #Custom data import function for blast output
-  blast.data <- reactive({
     
     examplefiles <- function() {
       example_name <- "example_metadata.txt"
@@ -337,10 +454,10 @@ importMetadata <- function(input, output, session, metadata_file, load.data.func
     return(data)
   })
   
-  output$example <- DT::renderDataTable({
+  output$example <- renderDataTable({
     tabledata <-	req(imported.metadata())
     
-    DT::datatable(tabledata,
+    datatable(tabledata,
                   rownames = FALSE,
                   options = list(
                     dom = "tip",
@@ -358,7 +475,7 @@ annotationTableOutput <- function(id) {
   ns <- NS(id)
   fluidPage(
     box(width = 12,
-        DT::dataTableOutput(ns("table")),
+        dataTableOutput(ns("table")),
         actionButton(ns("clearbutton"), "Clear Selection")
     )
   )
@@ -368,8 +485,8 @@ annotationTable <- function(input, output, session, datasubset) {
   ns <- session$ns
   
   #Generate a table with contig info
-  output$table <- DT::renderDataTable({
-    DT::datatable(datasubset(),
+  output$table <- renderDataTable({
+    datatable(datasubset(),
                   selection = list(
                     mode = 'multiple',
                     selected = NULL,
@@ -378,18 +495,16 @@ annotationTable <- function(input, output, session, datasubset) {
                   options = list(
                     ordering=F,
                     dom = "tip",
-                    pageLength = 100,
-                    scrollX = TRUE,
-                    scrollY = 100,
-                    sScrollY = "500px"
-                  )
+                    pageLength = 10,
+                    scrollX = TRUE
+                    )
     )
   })
   
-  proxy = DT::dataTableProxy('table')
+  proxy = dataTableProxy('table')
   
   observeEvent(input$clearbutton, {
-    proxy %>% DT::selectRows(NULL)
+    proxy %>% selectRows(NULL)
   })
   
   get.selected <- reactive({
