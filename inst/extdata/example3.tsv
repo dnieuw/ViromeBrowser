@@ -1,4 +1,4 @@
-contig.id	annotation	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
+contig.id	family	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
 Contig1	Asfarviridae	537	135	512	377	0.7	-2	31.6	3.98107E-11	ADD62410_pB602L_partial_African_swine_fever_virus
 Contig2	Herpesviridae	5472	1561	1725	164	0.03	-1	60	1.8197E-12	P25050_RecName_FullSaimiri_transformationassociated_protein_AltName_FullCollagenlike_protein_AltName_FullstpC
 Contig3	Asfarviridae	15914	13359	14474	1115	0.07	3	33.3	6.60693E-44	CAN10153_RNA_polymerase_subunit_2_African_swine_fever_virus_Benin_971

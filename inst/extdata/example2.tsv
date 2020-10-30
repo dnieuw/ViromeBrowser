@@ -1,4 +1,4 @@
-contig.id	annotation	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
+contig.id	family	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
 Contig1	Adenoviridae	558	2	556	554	0.99	2	99.5	8.3176E-108	AIT55881_DNAbinding_protein_Human_mastadenovirus_D
 Contig2	Adenoviridae	353	1	351	350	0.99	-3	100	6.60693E-66	AEL78881_100K_protein_Human_adenovirus_60a
 Contig3	Herpesviridae	331	1	249	248	0.75	-2	48.8	2.63027E-16	NP_077473_uracil_DNA_glycosylase_Cercopithecine_herpesvirus_9

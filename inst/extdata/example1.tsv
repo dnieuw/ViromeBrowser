@@ -1,4 +1,4 @@
-contig.id	annotation	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
+contig.id	family	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
 Contig1	Herpesviridae	145	3	143	140	0.97	-3	65.3	1.94984E-10	AHM96085_large_tegument_protein_Papiine_herpesvirus_2
 Contig2	Picornaviridae	758	129	758	629	0.83	-1	98.6	4.7863E-111	ADN52312_polyprotein_Aichi_virus_1
 Contig3	Picornaviridae	499	2	490	488	0.98	-1	98.2	5.7544E-91	ADN52311_polyprotein_Aichi_virus_1

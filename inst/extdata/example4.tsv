@@ -1,4 +1,4 @@
-contig.id	annotation	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
+contig.id	family	contig.length	hit.start	hit.end	length.homology	frac.homology	qframe	identity	evalue	target
 Contig1	Herpesviridae	1001	693	839	146	0.15	-1	67.3	5.7544E-14	CAA67869_StpC139_Saimiriine_herpesvirus_2
 Contig2	Picobirnaviridae	5344	3610	4017	407	0.08	-2	31.2	6.0256E-13	ANS53890_ORF1_Picobirnavirus_wolfPRT1892015
 Contig3	Herpesviridae	838	2	241	239	0.29	2	35.8	6.16595E-12	CAC84343_hypothetical_protein_Saimiriine_herpesvirus_2
