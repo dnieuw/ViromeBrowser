@@ -106,8 +106,7 @@ output$select.contig.current <- renderUI({
 
 	ui <- pickerInput(inputId = "current_contig",
   	label = "Select Contig",
-		choices = choices,
-		choicesOpt = list(subtext = paste("Annotation", selected[,annotation], sep = ": "))
+		choices = choices
 	)
 	return(ui)
 })
@@ -199,15 +198,17 @@ output$contig.summary <- renderUI({
 })
 
 output$orfplot <- renderRbokeh({
+  orfs <- get.contig.orfs()
 	selected <- get.contig.current()
-	hit.start <- selected$hit.start
-	hit.end <- selected$hit.end
-
-	orfs <- get.contig.orfs()
-	if (any(is.na(c(hit.start,hit.end))))
-		plot.orfs(orfs,input$orf.size.cutoff)
-	else
-		plot.orfs(orfs,input$orf.size.cutoff) %>% ly_abline(v=hit.start) %>% ly_abline(v=hit.end)
+	
+	if (all(c("hit.start","hit.end")%in%colnames(selected))) {
+	  if (all(!is.na(c(selected$hit.start,selected$hit.end)))) {
+	    return(
+	      plot.orfs(orfs,input$orf.size.cutoff) %>% ly_abline(v=selected$hit.start) %>% ly_abline(v=selected$hit.end)
+	    )
+	  }
+	}
+	return(plot.orfs(orfs,input$orf.size.cutoff))
 })
 
 output$orf.size.cutoff <- renderUI({
@@ -283,11 +284,11 @@ observeEvent(input$clear.orf,{
 		orf.collection$orfs <- NULL
 })
 
-output$orf.collection.table <-  DT::renderDataTable({
+output$orf.collection.table <-  renderDataTable({
 	ranges <- do.call(c,lapply(orf.collection$orfs,ranges))
 	meta <- do.call(rbind,lapply(orf.collection$orfs,mcols))
 	data <- cbind(as.data.frame(meta),as.data.frame(ranges))
-	outputtable <- DT::datatable(data,
+	outputtable <- datatable(data,
 		selection = list(
   		mode = 'multiple',
   		selected = NULL,
