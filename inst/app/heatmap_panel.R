@@ -132,7 +132,10 @@ output$contig_table <- renderDataTable({
   validate(
     need(!is.null(annotation_data()),"Loading...")
   )
-  plotdata <- annotation_data()[,c(-1,-2), with=FALSE]
+  
+  #Remove filter for file id and contig id
+  rm_filter <- -which(colnames(annotation_data())%in%c("file.id","contig.id"))
+  plotdata <- annotation_data()[,rm_filter, with=FALSE]
   datatable(plotdata,
             filter = 'top',
             options = list(
