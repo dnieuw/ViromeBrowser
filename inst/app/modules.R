@@ -80,7 +80,7 @@ importAnnotationOutput <- function(id){
     column(4,
       box(title = "Annotation configuration", solidHeader = T, status = "primary", width = NULL,
         rHandsontableOutput(ns("import_config_table"), width="100%"),
-        footer = "Please select which columns correspont to which annotations in the table below"
+        footer = "Please select which columns correspont to which annotations in the table"
       )
     ),
     column(8,
