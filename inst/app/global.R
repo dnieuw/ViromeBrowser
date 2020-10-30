@@ -9,11 +9,13 @@ library(markdown)
 library(shinyWidgets)
 library(stringr)
 library(shinycssloaders)
+library(rhandsontable)
+library(DT)
 
 #Allow upload of files up to 1 gigabyte
 options(shiny.maxRequestSize=1000*1024^2,
         spinner.type=1)
-options(shiny.reactlog=TRUE) 
+
 #Load modules
 source("modules.R")
 
