@@ -2,6 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+.gitignore
 inst/doc
 ViromeBrowser.Rproj
 CRAN-RELEASE
+rsconnect
+data

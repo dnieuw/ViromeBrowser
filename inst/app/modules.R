@@ -9,17 +9,19 @@ importFilesOutput <- function(id){
             box(width = 12,
               uiOutput(ns("metadata_file")),
               uiOutput(ns("annot_file")),
-              uiOutput(ns("contig_file"))
+              uiOutput(ns("taxdump_file")),
+              uiOutput(ns("contig_file")),
+              uiOutput(ns("bam_file"))
             ),
             box(width = 12,
               actionButton(ns("load_data"), "Load Data"),
               br(),br(),
-              prettySwitch(
-                inputId = ns("load_example"),
-                label = "Load example data", 
-                status = "success",
-                fill = TRUE
-              )
+              # prettySwitch(
+              #   inputId = ns("load_example"),
+              #   label = "Load example data", 
+              #   status = "success",
+              #   fill = TRUE
+              # )
             )
           )
         ),
@@ -33,6 +35,9 @@ importFilesOutput <- function(id){
     ),
     tabPanel(title = "Contig Files",
       importContigOutput(ns("contig"))
+    ),
+    tabPanel(title = "BAM Files",
+      importBAMOutput(ns("bam"))
     )
   )
 }
@@ -50,11 +55,27 @@ importFiles <- function(input, output, session){
               multiple = T)
   })
   
+  #Input rankedlineage.dmp file
+  output$taxdump_file <- renderUI({
+    fileInput(ns("taxdump"), 
+              label = "rankedlineage.dmp", 
+              accept = c(".dmp"), 
+              multiple = F)
+  })
+  
   #Input contig file GUI
   output$contig_file <- renderUI({
     fileInput(ns("contig"), 
               label = "Contig files (.fasta)", 
               accept = c(".fas",".fasta"), 
+              multiple = T)
+  })
+  
+  #Input bam file GUI
+  output$bam_file <- renderUI({
+    fileInput(ns("bam"), 
+              label = "BAM files (.bam)", 
+              accept = c(".bam"), 
               multiple = T)
   })
   
@@ -66,34 +87,34 @@ importFiles <- function(input, output, session){
               multiple = F)
   })
   
-  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$load_data), reactive(input$load_example))
-  contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(input$load_example))
-  metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(input$load_example))
+  # annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$taxdump), reactive(input$load_data), reactive(input$load_example))
+  # contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(input$load_example))
+  # readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data), reactive(input$load_example))
+  # metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(input$load_example))
+
+  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$taxdump), reactive(input$load_data), reactive(FALSE))
+  contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(FALSE))
+  readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data), reactive(FALSE))
+  metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(FALSE))
   
-  return(list("annot" = annot$data, "defaults" = annot$defaults, "contig" = contig, "metadata" = metadata))
+  return(list("annot" = annot$data, "defaults" = annot$defaults, "contig" = contig, "readcounts" = readcounts, "metadata" = metadata))
 }
 
 #GUI
 importAnnotationOutput <- function(id){
   ns <- NS(id)
   fluidPage(
-    column(4,
-      box(title = "Annotation configuration", solidHeader = T, status = "primary", width = NULL,
-        rHandsontableOutput(ns("import_config_table"), width="100%"),
-        footer = "Please select which columns correspont to which annotations in the table"
-      )
-    ),
-    column(8,
-      box(title = "Annotation files", solidHeader = T, status = "primary", width = NULL,
-        dataTableOutput(ns("example")),
-        footer = "The first line of each imported and parsed file is shown"
-      )
+    box(title = "Annotation files", solidHeader = T, status = "primary", width = NULL,
+      uiOutput(ns("select_file")),
+      dataTableOutput(ns("example")),
+      footer = "The first line of each imported and parsed file is shown"
     )
   )
 }
 
 #callModule function
-importAnnotation <- function(input, output, session, annot_file, load.data, exampledata){
+importAnnotation <- function(input, output, session, annot_file, taxdump_file, load.data, exampledata){
+  ns <- session$ns
   
   #Reactive event for loading tsv data
   imported.data <- eventReactive(load.data(),{
@@ -124,6 +145,10 @@ importAnnotation <- function(input, output, session, annot_file, load.data, exam
     data <- apply(file_data, 1, function(file){
       progress$inc(1/n, detail = paste0("Reading: ", file["name"]))
       result <- fread(file["datapath"])
+      names(result) <- c("contig.id","target","identity",
+                       "length.homology","mismatch","gapopen",
+                       "qstart","qend","hit.start","hit.end",
+                       "evalue","bitscore","annotation")
       result$file.id <- str_remove(file["name"], "\\..*")
       return(result)
     })
@@ -133,44 +158,130 @@ importAnnotation <- function(input, output, session, annot_file, load.data, exam
     return(data)
   })
   
-  #Generate a table to select which columns represent what data to import
-  output$import_config_table <- renderRHandsontable({
-    req(imported.data())
+  taxdump_lineage <- reactive({
+    req(taxdump_file())
     
-    #Create a dataframe with all annotation data that can be imported and the column names from the imported data
-    #Users can select which column in the input contains which annoation data
-    input_options <- factor("NotAvailable",levels=c("NotAvailable", colnames(imported.data())))
-    selection_df <- data.frame(column=rep(input_options, 17), 
-                               row.names = c("contig.id",
-                                    "superkingdom",
-                                    "kingdom",
-                                    "class",
-                                    "order",
-                                    "family",
-                                    "genus",
-                                    "species",
-                                    "taxonomic_name",
-                                    "contig.length",
-                                    "hit.start",
-                                    "hit.end",
-                                    "length.homology",
-                                    "frac.homology",
-                                    "identity",
-                                    "evalue",
-                                    "target"))
+    fname <- taxdump_file()$datapath
     
-    rhandsontable(selection_df,
-                  colHeaders = FALSE,
-                  rowHeaderWidth = 150,
-                  stretchH = "all"
-                  )
+    taxdata <- fread(file = fname,sep="\t")[,c(1,3,5,7,9,11,13,15,17,19)]
+    colnames(taxdata) <- c("tax_id","tax_name","species","genus","family","order","class","phylum","kingdom","superkingdom")
+    
+    taxdata[,tax_id:=as.integer(tax_id)]
+    setkey(taxdata,"tax_id")
+    return(taxdata)
   })
   
-  output$example <- renderDataTable({
-    req(configured_data())
+  resolvemultipletaxon <- function(multitaxon, taxdump_lineage) {
     
+    #Get entries with multiple taxon information and paste together all taxons per contig
+    lineage_data <- multitaxon[,.(combined=paste(annotation,collapse = ";")),.(contig.id,file.id)]
+    
+    #Split on ";" to get 1 line per taxon id
+    lineage_data <- lineage_data[,str_split(combined,";"),.(contig.id,file.id)]
+    colnames(lineage_data) <- c("contig.id","file.id","tax_id")
+    lineage_data[,tax_id:=as.integer(tax_id)]
+  
+    #Merge with ranked lineage to get complete lineage
+    lineage_data <- merge.data.table(lineage_data,taxdump_lineage(), by = "tax_id")
+    
+    #Remove taxid which interferes with further process
+    lineage_data[,tax_id:=NULL]
+    
+    find_uniq <- function(x) {
+      if (all(x=="")) return("")
+      x_uniq <- unique(x[x!=""])
+      ifelse(length(x_uniq)==1,x_uniq,"-")
+    }
+    
+    #Determine LCA per contig
+    contig_lca <- lineage_data[, lapply(.SD,find_uniq), .(contig.id, file.id)]
+    
+    #Remove lineages with nonconforming lower ancestor
+    contig_lca[superkingdom=='-',superkingdom:="root"]
+    contig_lca[superkingdom=='-',c("tax_name","species","genus","family","order","class","phylum","kingdom"):=""]
+    contig_lca[kingdom=='-',c("tax_name","species","genus","family","order","class","phylum","kingdom"):=""]
+    contig_lca[phylum=='-',c("tax_name","species","genus","family","order","class","phylum"):=""]
+    contig_lca[class=='-',c("tax_name","species","genus","family","order","class"):=""]
+    contig_lca[order=='-',c("tax_name","species","genus","family","order"):=""]
+    contig_lca[family=='-',c("tax_name","species","genus","family"):=""]
+    contig_lca[genus=='-',c("tax_name","species","genus"):=""]
+    contig_lca[species=='-',c("tax_name","species"):=""]
+    contig_lca[tax_name=='-',c("tax_name"):=""]
+    
+    result <- merge.data.table(multitaxon, contig_lca, by=c("file.id","contig.id"))
+    
+    return(result)
+  }
+  
+  configured.data <- reactive({
+    req(imported.data())
+    
+    data <- imported.data()
+    
+    if (exampledata() == FALSE) {
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      progress$set(message = "Adding taxonomic lineage to annotation", value = 0)
+      progress$inc(0.5)
+      on.exit(progress$close())
+        
+      req(taxdump_lineage())
+      
+      data[,result.id:=seq(nrow(data))]
+      
+      #Get entries with mutiple taxIDs
+      multitaxon <- data[grep(";",annotation)]
+      #Resolve results with multiple taxon ids using LCA
+      multitaxon <- resolvemultipletaxon(multitaxon, taxdump_lineage)
+      
+      #Get entries with single taxon
+      singletaxon <- data[grep(";",annotation,invert = T)]
+      singletaxon[,annotation:=as.integer(annotation)]
+      #Merge with ranked lineage to get complete lineage
+      singletaxon <- merge.data.table(singletaxon,taxdump_lineage(), by.x = "annotation", by.y = "tax_id")
+      
+      data <- rbind.data.frame(singletaxon, multitaxon)
+      progress$inc(0.5)
+    } else {
+      #do example taxlineage stuff
+    }
+    #Remove taxID which is replaced by lineage information
+    data[,annotation := NULL]
+    
+    data[,contig.id := as.factor(contig.id)]
+    data[,hit.start := as.numeric(hit.start)]
+    data[,hit.end := as.numeric(hit.end)]
+    data[,length.homology := as.numeric(length.homology)]
+    data[,identity := as.numeric(identity)]
+    data[,bitscore := as.numeric(bitscore)]
+    data[,evalue := -log10(as.numeric(evalue))]
+    data[is.infinite(evalue) & sign(evalue) == 1, evalue := 999]
+    data[is.infinite(evalue) & sign(evalue) == 1, evalue := 0]
+    data[,"evalue(-log10)" := round(evalue, 2)]
+    data[,evalue:=NULL]
+    data[,target := as.factor(target)]
+    data[,file.id := as.factor(file.id)]
+    
+    data <- data[,c("file.id","contig.id","target","tax_name",
+                    "species","genus","family","order",
+                    "class","phylum","kingdom","superkingdom",
+                    "hit.start","hit.end","length.homology",
+                    "identity","evalue(-log10)", "bitscore")]
+    
+    return(data)
+  })
+  
+  output$select_file <- renderUI({
+    req(imported.data())
+    filenames <- unique(imported.data()$file.id)
+    selectInput(ns("select_file"),label = "File", choices = filenames, width = "200px", multiple = F)
+  })
+  
+  #Create example to show in the interface
+  output$example <- renderDataTable({
+    req(configured.data(), input$select_file)
     #Group data by file.id and show first entry per file
-    datatable(configured_data()[,.SD[1], by=file.id],
+    datatable(configured.data()[file.id==input$select_file],
                   rownames = FALSE,
                   options = list(
                     dom = "tip",
@@ -179,137 +290,13 @@ importAnnotation <- function(input, output, session, annot_file, load.data, exam
                     sScrollY = "650px"
                   )
     )
-    
   })
   
-  configured_data <- reactive({
-    
-    if (exampledata() == FALSE){
-      req(input$import_config_table)
-      config <- as.data.table(hot_to_r(input$import_config_table), keep.rownames = T)
-      colnames(config) <- c("rn","column")
-      
-      #Dont show anything if all columns are excluded
-      if (config[,all(column=="NotAvailable")]) {
-        return(NULL)
-      }
-      
-      input_columns <- config[column!="NotAvailable",as.character(column)]
-      annotation_config <- config[column!="NotAvailable",rn]
-      
-      data <- imported.data()
-      data <- data[,c("file.id",input_columns), with=F]
-      
-      colnames(data) <- c("file.id", annotation_config)
-    } else {
-      data <- imported.data()
-    }
-
-    #Reformat the annotation columns if present
-    sapply(colnames(data), switch,
-      contig.id = {
-        data[,contig.id := as.factor(contig.id)]
-      },
-      superkingdom = {
-        data[,superkingdom := as.factor(superkingdom)]
-      },
-      kingdom = {
-        data[,kingdom := as.factor(kingdom)]
-      },
-      class = {
-        data[,class := as.factor(class)]
-      },
-      order = {
-        data[,order := as.factor(order)]
-      },
-      family = {
-        data[,family := as.factor(family)]
-      },
-      genus = {
-        data[,genus := as.factor(genus)]
-      },
-      species = {
-        data[,species := as.factor(species)]
-      },
-      taxonomic_name = {
-        data[,taxonomic_name := as.factor(taxonomic_name)]
-      },
-      contig.length = {
-        data[,contig.length := as.numeric(contig.length)]
-      },
-      hit.start = {
-        data[,hit.start := as.numeric(hit.start)]
-      },
-      hit.end = {
-        data[,hit.end := as.numeric(hit.end)]
-      },
-      length.homology = {
-        data[,length.homology := as.numeric(length.homology)]
-      },
-      frac.homology = {
-        data[,frac.homology := as.numeric(frac.homology)]
-      },
-      identity = {
-        data[,identity := as.numeric(identity)]
-      },
-      evalue = {
-        data[,evalue := -log10(as.numeric(evalue))]
-        data[is.infinite(evalue) & sign(evalue) == 1, evalue := 999]
-        data[is.infinite(evalue) & sign(evalue) == 1, evalue := 0]
-        data[,"evalue(-log10)" := round(evalue, 2)]
-        data[,evalue:=NULL]
-      },
-      target = {
-        data[,target := as.factor(target)]
-      },
-      file.id = {
-        data[,file.id := as.factor(file.id)]
-      }
-    )
-    
-    return(data)
-    
-  })
-  
-  default_threshold_values <- reactive({
-
-    req(configured_data())
-    
-    thresholds <- NULL
-    
-    #Set the default thresholds for annotation columns if present
-    sapply(colnames(data), switch,
-           contig.id = {
-             thresholds["file.id"]=NA
-           },
-           contig.length = {
-             thresholds["contig.length"]=c(500,Inf)
-           },
-           length.homology = {
-             thresholds["length.homology"]=c(500,Inf)
-           },
-           frac.homology = {
-             thresholds["frac.homology"]=NA
-           },
-           identity = {
-             thresholds["identity"]=c(90,Inf)
-           },
-           "evalue(-log10)" = {
-             thresholds["evalue(-log10)"]=NA
-           },
-           target = {
-             thresholds["target"]=NA
-           },
-           file.id = {
-             thresholds["file.id"]=NA
-           })
-    
-    return(thresholds)
-    
-  })
+  #Set the default quality threshold values
+  default_threshold_values <- list("length.homology"=list(search='500 ... Inf'),"contig.length"=list(search='500 ... Inf'),"identity"=list(search='90 ... Inf'))
   
   #Return the imported data
-  return(list("data" = configured_data, "defaults" = default_threshold_values))
+  return(list("data" = configured.data, "defaults" = default_threshold_values))
 }
 
 #GUI
@@ -317,15 +304,15 @@ importContigOutput <- function(id){
   ns <- NS(id)
   fluidPage(
     box(title = "Contig files", solidHeader = T, status = "primary", width = NULL,
-        dataTableOutput(ns("example")),
-        footer = "The first contig of each imported and parsed file is shown"
+        uiOutput(ns("select_file")),
+        dataTableOutput(ns("example"))
     )
   )
 }
 
 #CallModule function
 importContig <- function(input, output, session, contig_file, load.data, exampledata){
-  
+  ns <- session$ns
   #Reactive event for loading contig data
   imported.fasta <- eventReactive(load.data(),{
     if (exampledata() == FALSE){
@@ -368,17 +355,136 @@ importContig <- function(input, output, session, contig_file, load.data, example
     return(data)
   })
   
+  output$select_file <- renderUI({
+    req(imported.fasta())
+    
+    filenames <- names(imported.fasta())
+    selectInput(ns("select_file"),label = "File", choices = filenames, width = "200px", multiple = F)
+  })
+  
   output$example <- renderDataTable({
+    req(input$select_file)
     data <-	req(imported.fasta())
-    printdata <- lapply(seq_along(data), function(n){
-      contig.example <- scanFa(data[[n]]$fasta, param=data[[n]]$idx[1])
-      file.id <- names(data)[n]
-      contig.id <- names(contig.example)
-      contig.seq <- paste(as.character(subseq(contig.example[[1]], end = 15)),as.character(subseq(contig.example[[1]], start = -15)),sep="...")
-      data.table("file.id"=file.id, "contig.id"=contig.id, "contig.seq"=contig.seq)
+    
+    contig.example <- scanFa(data[[input$select_file]]$fasta, param=data[[input$select_file]]$idx)
+    file.id <- input$select_file
+    contig.id <- names(contig.example)
+    contig.seq <- paste(as.character(subseq(contig.example[[1]], end = 15)),as.character(subseq(contig.example[[1]], start = -15)),sep="...")
+    printdata <- data.table("file.id"=file.id, "contig.id"=contig.id, "contig.seq"=contig.seq)
+
+    datatable(printdata[file.id==input$select_file],
+              rownames = FALSE,
+              options = list(
+                dom = "tip",
+                pageLength = 15,
+                scrollX = TRUE,
+                sScrollY = "650px",
+                initComplete = JS(
+                  "function(settings, json) {",
+                  "$('td').css({'border': '1px blue'});",
+                  "$('th').css({'border': '1px red'});",
+                  "}")
+              )
+    )
+  })
+  
+  return(imported.fasta)
+}
+
+#GUI
+importBAMOutput <- function(id){
+  ns <- NS(id)
+  fluidPage(
+    box(title = "BAM files", solidHeader = T, status = "primary", width = NULL,
+        uiOutput(ns("select_file")),
+        dataTableOutput(ns("example"))
+    )
+  )
+}
+
+#CallModule function
+importBAM <- function(input, output, session, BAM_file, load.data, exampledata){
+  ns <- session$ns
+  #Reactive event for loading contig data
+  imported.bam <- eventReactive(load.data(),{
+    if (exampledata() == FALSE){
+      req(BAM_file())
+    }
+    
+    # examplefiles <- function() {
+    #   example_names <- c("example1.fasta","example2.fasta","example3.fasta","example4.fasta")
+    #   example_file <- sapply(example_names, function(x) system.file("extdata", x, package = "viromeBrowser"))
+    #   example_data <- data.frame("name"=example_names, "datapath"=example_file)
+    #   return(example_data)
+    # }
+    
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+    progress$set(message = "Loading BAM files", value = 0)
+    on.exit(progress$close())
+    
+    if(exampledata()==TRUE) {
+      #Load the example file names if we want to load the example data
+      file_data <- examplefiles()
+    } else {
+      file_data <- BAM_file()
+    }
+    
+    #2 progress steps per file
+    n <- nrow(file_data)*2
+    
+    data <- apply(file_data, 1, function(file){
+      #Increase progress
+      progress$inc(1/n, detail = paste0(file["name"],"-indexing"))
+      
+      #Index bamfile
+      bam_index <- indexBam(file["datapath"])
+      
+      #Increase progress
+      progress$inc(1/n, detail = paste0(file["name"],"-counting"))
+      
+      #Open bamfile
+      bam_file <- BamFile(file["datapath"])
+        
+      #Load contig information (name,length)
+      contig_info <- seqinfo(bam_file)
+      contig_info <- data.table(seqnames=seqnames(contig_info),seqlengths=seqlengths(contig_info))
+      
+      #Create a genomic range for each complete contig
+      gr <- GRanges(contig_info$seqnames, IRanges(start=1,end=contig_info$seqlengths))
+      
+      #Generate the parameters to scan the bamfile with
+      params <- ScanBamParam(which = gr, what = scanBamWhat())
+      
+      #Extract read counts per contig for the complete contig (and contig size)
+      counts <- data.table(countBam(bam_file, param = params)[,c(1,6)])
+      
+      names(counts) <- c("contig.id","readcount")
+      
+      counts[,totalreadcount:=sum(readcount)]
+      
+      counts[,file.id:=str_remove(file["name"], "\\..*")]
+      
+      return(counts)
     })
-    printdata <- rbindlist(printdata)
-    datatable(printdata,
+    
+    data <- rbindlist(data)
+    
+    return(data)
+  })
+  
+  output$select_file <- renderUI({
+    req(imported.bam())
+    filenames <- unique(imported.bam()$file.id)
+    selectInput(ns("select_file"),label = "File", choices = filenames, width = "200px", multiple = F)
+  })
+  
+  output$example <- renderDataTable({
+    req(input$select_file)
+    data <-	req(imported.bam())
+    
+    
+    datatable(imported.bam()[file.id==input$select_file],
               rownames = FALSE,
               options = list(
                 dom = "tip",
@@ -389,7 +495,7 @@ importContig <- function(input, output, session, contig_file, load.data, example
     )
   })
   
-  return(imported.fasta)
+  return(imported.bam)
 }
 
 #GUI
@@ -476,7 +582,6 @@ annotationTableOutput <- function(id) {
   fluidPage(
     box(width = 12,
         dataTableOutput(ns("table")),
-        actionButton(ns("clearbutton"), "Clear Selection")
     )
   )
 }
@@ -499,12 +604,6 @@ annotationTable <- function(input, output, session, datasubset) {
                     scrollX = TRUE
                     )
     )
-  })
-  
-  proxy = dataTableProxy('table')
-  
-  observeEvent(input$clearbutton, {
-    proxy %>% selectRows(NULL)
   })
   
   get.selected <- reactive({

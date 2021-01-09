@@ -92,6 +92,19 @@ plot.slidingwindow <- function(sequence,winsize,type){
 
 annot <- callModule(annotationTable, "annot.table", heatmap.selected)
 
+output$filterInfo <- renderUI({
+  filter_settings <- req(input$contig_table_search_columns)
+  
+  filter_settings[filter_settings==''] <- "All"
+  names(filter_settings) <- c("length.homology","identity","evalue(-log10)","bitscore","contig.length","fraction.homology","readcount")
+    
+  fields <- tags$div(lapply(names(filter_settings), function(field){
+    list(tags$strong(paste(field,": ")), filter_settings[field], br())
+  }))
+
+  return(fields)
+})
+
 get.contig.selected <- reactive({
   validate(need(!is.null(annot$selected()),message="Please select a contig to visualize"))
   selected <- req(annot$table())[annot$selected()]
@@ -297,11 +310,13 @@ output$orf.collection.table <-  renderDataTable({
   	options = list(
   		ordering=F,
   		dom = "t",
-  		pageLength = 100,
-  		lengthMenu = 25,
-  		scrollX = TRUE,
-  		scrollY = 100,
-  		sScrollY = "400px"
+  		pageLength = 10,
+  		scrollX = TRUE
+  		# pageLength = 100,
+  		# lengthMenu = 25,
+  		# scrollX = TRUE,
+  		# scrollY = 100,
+  		# sScrollY = "400px"
     )
   )
 	return(outputtable)

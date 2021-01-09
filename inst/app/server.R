@@ -5,6 +5,7 @@ shinyServer(function(input, output, session) {
 	annotation_data <- importdata$annot
 	default_values <- importdata$defaults
 	contig_data <- importdata$contig
+	readcount_data <- importdata$readcounts
   metadata <- importdata$metadata
   
 	output$importdata <- renderMenu({
@@ -13,8 +14,8 @@ shinyServer(function(input, output, session) {
 	
 	source("heatmap_panel.R", local = TRUE)
 	output$heatmap <- renderMenu({
-		req(annotation_data())
-
+		req(annotation_data(), contig_data(), readcount_data())
+    
 		menuItem("Interactive Data Browser", tabName = "heatmap")
 	})
   
@@ -22,7 +23,7 @@ shinyServer(function(input, output, session) {
 	output$seqinfo <- renderMenu({
 		req(annotation_data(), contig_data())
 
-		menuItem("Sequence Information", tabName = "seqinfo")
+		menuItem("Selected sequence annotations", tabName = "seqinfo")
 	})
 	
 	isolate({updateTabItems(session, "sidebar", "dataimport")})
