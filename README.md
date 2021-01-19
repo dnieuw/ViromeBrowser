@@ -28,8 +28,10 @@ Read the vignette by running:
 ```
 vignette("viromeBrowser")
 ```
-Start the app by running the viromeBrowser() function.
-
+Start the app by running
+```
+viromeBrowser()
+```
 The viromeBrowser logo was made with graphics from:
 
 <a href="https://www.vecteezy.com">Vector Graphics by vecteezy.com</a>
