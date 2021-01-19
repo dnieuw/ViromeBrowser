@@ -18,7 +18,7 @@ Or if there is a newer verion on github:
 ```
 install.packages("devtools")
 library(devtools)
-install_github("dnieuw/viromebrowser")
+install_github("dnieuw/viromebrowser", build_vignette = TRUE)
 ```
 Load the package using the following command:
 ```
