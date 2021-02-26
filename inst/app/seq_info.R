@@ -125,12 +125,14 @@ output$select.contig.current <- renderUI({
 })
 
 get.contig.current <- reactive({
+  req(input$current_contig)
 	selected <- get.contig.selected()
-	current <- selected[as.numeric(req(input$current_contig))]
+	current <- selected[as.numeric(input$current_contig)]
 	return(current)
 })
 
 get.contig.seq <- reactive({
+  req(contig_data())
 	current <- get.contig.current()
 	contigid <- as.character(current$contig.id)
 	file <- as.character(current$file.id)

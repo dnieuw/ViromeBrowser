@@ -9,7 +9,6 @@ importFilesOutput <- function(id){
             box(width = 12,
               uiOutput(ns("metadata_file")),
               uiOutput(ns("annot_file")),
-              uiOutput(ns("taxdump_file")),
               uiOutput(ns("contig_file")),
               uiOutput(ns("bam_file"))
             ),
@@ -55,14 +54,6 @@ importFiles <- function(input, output, session){
               multiple = T)
   })
   
-  #Input rankedlineage.dmp file
-  output$taxdump_file <- renderUI({
-    fileInput(ns("taxdump"), 
-              label = "rankedlineage.dmp", 
-              accept = c(".dmp"), 
-              multiple = F)
-  })
-  
   #Input contig file GUI
   output$contig_file <- renderUI({
     fileInput(ns("contig"), 
@@ -92,7 +83,7 @@ importFiles <- function(input, output, session){
   # readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data), reactive(input$load_example))
   # metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(input$load_example))
 
-  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$taxdump), reactive(input$load_data), reactive(FALSE))
+  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$load_data), reactive(FALSE))
   contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(FALSE))
   readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data), reactive(FALSE))
   metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(FALSE))
@@ -113,7 +104,7 @@ importAnnotationOutput <- function(id){
 }
 
 #callModule function
-importAnnotation <- function(input, output, session, annot_file, taxdump_file, load.data, exampledata){
+importAnnotation <- function(input, output, session, annot_file, load.data, exampledata){
   ns <- session$ns
   
   #Reactive event for loading tsv data
@@ -159,11 +150,27 @@ importAnnotation <- function(input, output, session, annot_file, taxdump_file, l
   })
   
   taxdump_lineage <- reactive({
-    req(taxdump_file())
+
+    cache_dir <- tempdir()
+    cache_file <- paste(cache_dir,"taxdump_tmp",sep='/')
     
-    fname <- taxdump_file()$datapath
+    if (!file.exists(cache_file)) {
+      tryCatch({
+        progress <- shiny::Progress$new()
+        progress$set(message = "Downloading taxdump", value = 0)
+        on.exit(progress$close())
+        download.file("https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.zip",cache_file)
+        progress$inc(1/2, detail = "Unzipping..")
+        unzip(cache_file, exdir=cache_dir)
+        progress$inc(1/2)
+      },error=function(cond) {
+        message("Cannot download new_taxdump")
+        message(cond)
+      }
+      )
+    }
     
-    taxdata <- fread(file = fname,sep="\t")[,c(1,3,5,7,9,11,13,15,17,19)]
+    taxdata <- fread(file = paste(cache_dir,"rankedlineage.dmp",sep='/'),sep="\t")[,c(1,3,5,7,9,11,13,15,17,19)]
     colnames(taxdata) <- c("tax_id","tax_name","species","genus","family","order","class","phylum","kingdom","superkingdom")
     
     taxdata[,tax_id:=as.integer(tax_id)]
@@ -547,10 +554,10 @@ importMetadata <- function(input, output, session, metadata_file, load.data, exa
     #Remove all columns with only one value
     data <- data[,data[ ,sapply(.SD, function(x) length(unique(x)) > 1)], with=F]
 
-    #Look for dates and transform them to dates
-    can_convert <- names(data)[which(!is.na(as.Date(unlist(data[1,]),"%m/%d/%Y")))]
-    replacement_dates <- lapply(can_convert, function(x) data[,as.Date(get(x), "%m/%d/%Y")])
-    data[,(can_convert) := replacement_dates]
+    # #Look for dates and transform them to dates
+    # can_convert <- names(data)[which(!is.na(as.Date(unlist(data[1,]),"%m/%d/%Y")))]
+    # replacement_dates <- lapply(can_convert, function(x) data[,as.Date(get(x), "%m/%d/%Y")])
+    # data[,(can_convert) := replacement_dates]
     
     #Turn all character columns into factors
     character_columns <- names(data)[which(data[ ,sapply(.SD, class)]=="character")]
@@ -598,10 +605,11 @@ annotationTable <- function(input, output, session, datasubset) {
                     target = 'row'
                   ),
                   options = list(
-                    ordering=F,
-                    dom = "tip",
-                    pageLength = 10,
-                    scrollX = TRUE
+                    ordering=T,
+                    dom = "tipf",
+                    pageLength = 15,
+                    scrollX = TRUE,
+                    scrollY = TRUE
                     )
     )
   })

@@ -9,43 +9,42 @@ dataimport.tab <- tabItem(
 heatmap.tab <- tabItem(
 	tabName = "heatmap",
 	fluidPage(
+	  
+	  fluidRow(
+	    box(width=12, solidHeader = F, title = "Heatmap of lowest common ancestor annotations, based on selected filters", status = "primary",
+	        fluidRow(
+	          column(2,
+	                 box(width=12,
+	                     uiOutput("metadata_stratify_selection"),
+	                     uiOutput("annotation_count_selection"),
+	                     uiOutput("annotation_stratify_selection"),
+	                     prettySwitch("logtransform","Log10 transform")
+	                 )
+	          ),
+	          column(10, align="center",
+	                 withSpinner(rbokehOutput("annot.heatmap", width = "50%", height = "800px"))
+	          )
+	        )
+	    )
+	  ),
 	  fluidRow(
 	    box(width = 12, solidHeader = T, title = "Metadata Filter Settings", 
 	        status = "primary", collapsible = T, collapsed = F,
-	     fluidRow(
-	       column(2,
-            box(width=12,
-                uiOutput("metadata_filter_selection"),
-                uiOutput("metadata_stratify_selection"),
-                uiOutput("annotation_count_selection"),
-                uiOutput("annotation_stratify_selection"),
-                prettySwitch("logtransform","Log10 transform"),
-                actionButton("update_heatmap",
-                             icon = icon("chart-bar"),
-                             label = "Apply filters")
-            )
-	       ),
-	       column(10,
-	        dataTableOutput("metadata_table")
-	       )
-	      )
+	        fluidPage(
+	          dataTableOutput("metadata_table")
+	        )
 	    )
 	  ),
 	  fluidRow(
 	    box(width = 12, solidHeader = T, title = "Annotation Filter Settings",
 	        collapsible = T, collapsed = F, status = "warning",
 	          column(12, align="center",
-	            dataTableOutput("contig_table", width = "100%")
+               fluidPage(
+                 dataTableOutput("contig_table", width = "100%")
+               )
 	          )
 	    )
-	  ),
-		fluidRow(
-		  box(width=12,
-  		  column(12, align="center",
-          withSpinner(rbokehOutput("annot.heatmap", width = "50%", height = "800px"))
-  		  )
-  		)
-		)
+	  )
 	)
 )
 #####
@@ -67,7 +66,7 @@ seqinfo.tab <- tabItem(
             )
           ),
           column(10,
-                annotationTableOutput("annot.table")
+            annotationTableOutput("annot.table")
           )
   		  )
   		),
