@@ -9,7 +9,6 @@ library(markdown)
 library(shinyWidgets)
 library(stringr)
 library(shinycssloaders)
-library(rhandsontable)
 library(DT)
 
 #Allow upload of files up to 1 gigabyte
