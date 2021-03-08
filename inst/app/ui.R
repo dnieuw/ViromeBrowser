@@ -31,7 +31,7 @@ heatmap.tab <- tabItem(
 	    box(width = 12, solidHeader = T, title = "Metadata Filter Settings", 
 	        status = "primary", collapsible = T, collapsed = F,
 	        fluidPage(
-	          dataTableOutput("metadata_table")
+	          DT::dataTableOutput("metadata_table")
 	        )
 	    )
 	  ),
@@ -40,7 +40,7 @@ heatmap.tab <- tabItem(
 	        collapsible = T, collapsed = F, status = "warning",
 	          column(12, align="center",
                fluidPage(
-                 dataTableOutput("contig_table", width = "100%")
+                 DT::dataTableOutput("contig_table", width = "100%")
                )
 	          )
 	    )
@@ -133,7 +133,7 @@ seqinfo.tab <- tabItem(
   					box(status = "primary",
   						width = 12,
   						solidHeader = T,
-  						dataTableOutput("orf.collection.table"),
+  						DT::dataTableOutput("orf.collection.table"),
   						uiOutput("download.seqtype"),
   						downloadButton('downloadFasta', 'Download Fasta'),
   						actionButton("clear.orf","Clear Collection")

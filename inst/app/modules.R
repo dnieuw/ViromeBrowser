@@ -97,7 +97,7 @@ importAnnotationOutput <- function(id){
   fluidPage(
     box(title = "Annotation files", solidHeader = T, status = "primary", width = NULL,
       uiOutput(ns("select_file")),
-      dataTableOutput(ns("example")),
+      DT::dataTableOutput(ns("example")),
       footer = "The first line of each imported and parsed file is shown"
     )
   )
@@ -285,10 +285,10 @@ importAnnotation <- function(input, output, session, annot_file, load.data, exam
   })
   
   #Create example to show in the interface
-  output$example <- renderDataTable({
+  output$example <- DT::renderDataTable({
     req(configured.data(), input$select_file)
     #Group data by file.id and show first entry per file
-    datatable(configured.data()[file.id==input$select_file],
+    DT::datatable(configured.data()[file.id==input$select_file],
                   rownames = FALSE,
                   options = list(
                     dom = "tip",
@@ -312,7 +312,7 @@ importContigOutput <- function(id){
   fluidPage(
     box(title = "Contig files", solidHeader = T, status = "primary", width = NULL,
         uiOutput(ns("select_file")),
-        dataTableOutput(ns("example"))
+        DT::dataTableOutput(ns("example"))
     )
   )
 }
@@ -369,7 +369,7 @@ importContig <- function(input, output, session, contig_file, load.data, example
     selectInput(ns("select_file"),label = "File", choices = filenames, width = "200px", multiple = F)
   })
   
-  output$example <- renderDataTable({
+  output$example <- DT::renderDataTable({
     req(input$select_file)
     data <-	req(imported.fasta())
     
@@ -379,7 +379,7 @@ importContig <- function(input, output, session, contig_file, load.data, example
     contig.seq <- paste(as.character(subseq(contig.example[[1]], end = 15)),as.character(subseq(contig.example[[1]], start = -15)),sep="...")
     printdata <- data.table("file.id"=file.id, "contig.id"=contig.id, "contig.seq"=contig.seq)
 
-    datatable(printdata[file.id==input$select_file],
+    DT::datatable(printdata[file.id==input$select_file],
               rownames = FALSE,
               options = list(
                 dom = "tip",
@@ -404,7 +404,7 @@ importBAMOutput <- function(id){
   fluidPage(
     box(title = "BAM files", solidHeader = T, status = "primary", width = NULL,
         uiOutput(ns("select_file")),
-        dataTableOutput(ns("example"))
+        DT::dataTableOutput(ns("example"))
     )
   )
 }
@@ -486,12 +486,12 @@ importBAM <- function(input, output, session, BAM_file, load.data, exampledata){
     selectInput(ns("select_file"),label = "File", choices = filenames, width = "200px", multiple = F)
   })
   
-  output$example <- renderDataTable({
+  output$example <- DT::renderDataTable({
     req(input$select_file)
     data <-	req(imported.bam())
     
     
-    datatable(imported.bam()[file.id==input$select_file],
+    DT::datatable(imported.bam()[file.id==input$select_file],
               rownames = FALSE,
               options = list(
                 dom = "tip",
@@ -510,7 +510,7 @@ importMetadataOutput <- function(id){
   ns <- NS(id)
   fluidPage(
     box(title = "Metadata", solidHeader = T, status = "primary", width = NULL,
-        dataTableOutput(ns("example"))
+        DT::dataTableOutput(ns("example"))
     )
   )
 }
@@ -567,10 +567,10 @@ importMetadata <- function(input, output, session, metadata_file, load.data, exa
     return(data)
   })
   
-  output$example <- renderDataTable({
+  output$example <- DT::renderDataTable({
     tabledata <-	req(imported.metadata())
     
-    datatable(tabledata,
+    DT::datatable(tabledata,
                   rownames = FALSE,
                   options = list(
                     dom = "tip",
@@ -588,7 +588,7 @@ annotationTableOutput <- function(id) {
   ns <- NS(id)
   fluidPage(
     box(width = 12,
-        dataTableOutput(ns("table")),
+        DT::dataTableOutput(ns("table")),
     )
   )
 }
@@ -597,8 +597,8 @@ annotationTable <- function(input, output, session, datasubset) {
   ns <- session$ns
   
   #Generate a table with contig info
-  output$table <- renderDataTable({
-    datatable(datasubset(),
+  output$table <- DT::renderDataTable({
+    DT::datatable(datasubset(),
                   selection = list(
                     mode = 'multiple',
                     selected = NULL,

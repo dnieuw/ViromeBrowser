@@ -299,11 +299,11 @@ observeEvent(input$clear.orf,{
 		orf.collection$orfs <- NULL
 })
 
-output$orf.collection.table <-  renderDataTable({
+output$orf.collection.table <-  DT::renderDataTable({
 	ranges <- do.call(c,lapply(orf.collection$orfs,ranges))
 	meta <- do.call(rbind,lapply(orf.collection$orfs,mcols))
 	data <- cbind(as.data.frame(meta),as.data.frame(ranges))
-	outputtable <- datatable(data,
+	outputtable <- DT::datatable(data,
 		selection = list(
   		mode = 'multiple',
   		selected = NULL,

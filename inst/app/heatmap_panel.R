@@ -256,7 +256,7 @@ selected_data <- reactive({
 })
 
 #Generate a table with contig info
-output$contig_table <- renderDataTable({
+output$contig_table <- DT::renderDataTable({
   validate(
     need(!is.null(merged_annotationdata()),"Loading annotation data...")
   )
@@ -275,7 +275,7 @@ output$contig_table <- renderDataTable({
   activate <- input$annotation_stratify_selection#No idea why, but this is needed to have the heatmap show up right away
   plotdata <- contig_data[,filter, with=F]
   rownames(plotdata) <- contig_data[,list(unique_names=paste(contig.id,seq(.N),sep="#")),contig.id][,unique_names]
-  datatable(plotdata,
+  DT::datatable(plotdata,
             rownames = T,
             filter = 'top',
             options = list(
@@ -289,12 +289,12 @@ output$contig_table <- renderDataTable({
 })
 
 #Generate a table with metadata info
-output$metadata_table <- renderDataTable({
+output$metadata_table <- DT::renderDataTable({
   validate(
     need(!is.null(metadata()),"Loading metadata...")
   )
   plotdata <- metadata()
-  datatable(plotdata,
+  DT::datatable(plotdata,
                 filter = list(
                   position = 'top', 
                   clear = FALSE, 
