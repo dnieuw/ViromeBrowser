@@ -14,7 +14,7 @@ Installing the package from R should work using:
 ```
 install.packages("viromeBrowser")
 ```
-Or if there is a newer verion on github:
+Or if there is a newer version on github:
 ```
 install.packages("devtools")
 library(devtools)
