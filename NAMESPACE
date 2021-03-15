@@ -2,7 +2,6 @@
 
 export(viromeBrowser)
 import(Biostrings)
-import(DT)
 import(Rsamtools)
 import(data.table)
 import(ggplot2)

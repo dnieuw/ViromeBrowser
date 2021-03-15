@@ -13,14 +13,7 @@ importFilesOutput <- function(id){
               uiOutput(ns("bam_file"))
             ),
             box(width = 12,
-              actionButton(ns("load_data"), "Load Data"),
-              br(),br(),
-              # prettySwitch(
-              #   inputId = ns("load_example"),
-              #   label = "Load example data", 
-              #   status = "success",
-              #   fill = TRUE
-              # )
+              actionButton(ns("load_data"), "Load Data")
             )
           )
         ),
@@ -78,15 +71,10 @@ importFiles <- function(input, output, session){
               multiple = F)
   })
   
-  # annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$taxdump), reactive(input$load_data), reactive(input$load_example))
-  # contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(input$load_example))
-  # readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data), reactive(input$load_example))
-  # metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(input$load_example))
-
-  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$load_data), reactive(FALSE))
-  contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data), reactive(FALSE))
-  readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data), reactive(FALSE))
-  metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data), reactive(FALSE))
+  annot <- callModule(importAnnotation,id = "annotation", reactive(input$annot), reactive(input$load_data))
+  contig <- callModule(importContig, id = "contig", reactive(input$contig), reactive(input$load_data))
+  readcounts <- callModule(importBAM, id = "bam", reactive(input$bam), reactive(input$load_data))
+  metadata <- callModule(importMetadata, id = "metadata", reactive(input$metadata), reactive(input$load_data))
   
   return(list("annot" = annot$data, "defaults" = annot$defaults, "contig" = contig, "readcounts" = readcounts, "metadata" = metadata))
 }
@@ -97,39 +85,26 @@ importAnnotationOutput <- function(id){
   fluidPage(
     box(title = "Annotation files", solidHeader = T, status = "primary", width = NULL,
       uiOutput(ns("select_file")),
-      DT::dataTableOutput(ns("example")),
-      footer = "The first line of each imported and parsed file is shown"
+      DT::dataTableOutput(ns("example"))
     )
   )
 }
 
 #callModule function
-importAnnotation <- function(input, output, session, annot_file, load.data, exampledata){
+importAnnotation <- function(input, output, session, annot_file, load.data){
   ns <- session$ns
   
   #Reactive event for loading tsv data
   imported.data <- eventReactive(load.data(),{
-    if (exampledata() == FALSE){
-      req(annot_file())
-    } 
     
-    examplefiles <- function() {
-      example_names <- c("example1.tsv","example2.tsv","example3.tsv","example4.tsv")
-      example_file <- sapply(example_names, function(x) system.file("extdata", x, package = "viromeBrowser"))
-      example_data <- data.frame("name"=example_names, "datapath"=example_file)
-      return(example_data)
-    }
+    req(annot_file())
     
     # Create a Progress object
     progress <- shiny::Progress$new()
     progress$set(message = "Loading annotation files", value = 0)
     on.exit(progress$close())
     
-    if (exampledata() == FALSE){
-      file_data <- annot_file()
-    } else {
-      file_data <- examplefiles()
-    }
+    file_data <- annot_file()
 
     n <- nrow(file_data)
     
@@ -225,33 +200,30 @@ importAnnotation <- function(input, output, session, annot_file, load.data, exam
     
     data <- imported.data()
     
-    if (exampledata() == FALSE) {
-      # Create a Progress object
-      progress <- shiny::Progress$new()
-      progress$set(message = "Adding taxonomic lineage to annotation", value = 0)
-      progress$inc(0.5)
-      on.exit(progress$close())
-        
-      req(taxdump_lineage())
+    # Create a Progress object
+    progress <- shiny::Progress$new()
+    progress$set(message = "Adding taxonomic lineage to annotation", value = 0)
+    progress$inc(0.5)
+    on.exit(progress$close())
       
-      data[,result.id:=seq(nrow(data))]
-      
-      #Get entries with mutiple taxIDs
-      multitaxon <- data[grep(";",annotation)]
-      #Resolve results with multiple taxon ids using LCA
-      multitaxon <- resolvemultipletaxon(multitaxon, taxdump_lineage)
-      
-      #Get entries with single taxon
-      singletaxon <- data[grep(";",annotation,invert = T)]
-      singletaxon[,annotation:=as.integer(annotation)]
-      #Merge with ranked lineage to get complete lineage
-      singletaxon <- merge.data.table(singletaxon,taxdump_lineage(), by.x = "annotation", by.y = "tax_id")
-      
-      data <- rbind.data.frame(singletaxon, multitaxon)
-      progress$inc(0.5)
-    } else {
-      #do example taxlineage stuff
-    }
+    req(taxdump_lineage())
+    
+    data[,result.id:=seq(nrow(data))]
+    
+    #Get entries with mutiple taxIDs
+    multitaxon <- data[grep(";",annotation)]
+    #Resolve results with multiple taxon ids using LCA
+    multitaxon <- resolvemultipletaxon(multitaxon, taxdump_lineage)
+    
+    #Get entries with single taxon
+    singletaxon <- data[grep(";",annotation,invert = T)]
+    singletaxon[,annotation:=as.integer(annotation)]
+    #Merge with ranked lineage to get complete lineage
+    singletaxon <- merge.data.table(singletaxon,taxdump_lineage(), by.x = "annotation", by.y = "tax_id")
+    
+    data <- rbind.data.frame(singletaxon, multitaxon)
+    progress$inc(0.5)
+    
     #Remove taxID which is replaced by lineage information
     data[,annotation := NULL]
     
@@ -318,32 +290,19 @@ importContigOutput <- function(id){
 }
 
 #CallModule function
-importContig <- function(input, output, session, contig_file, load.data, exampledata){
+importContig <- function(input, output, session, contig_file, load.data){
   ns <- session$ns
   #Reactive event for loading contig data
   imported.fasta <- eventReactive(load.data(),{
-    if (exampledata() == FALSE){
-      req(contig_file())
-    }
-    
-    examplefiles <- function() {
-      example_names <- c("example1.fasta","example2.fasta","example3.fasta","example4.fasta")
-      example_file <- sapply(example_names, function(x) system.file("extdata", x, package = "viromeBrowser"))
-      example_data <- data.frame("name"=example_names, "datapath"=example_file)
-      return(example_data)
-    }
-    
+   
+    req(contig_file())
+
     # Create a Progress object
     progress <- shiny::Progress$new()
     progress$set(message = "Loading contig files", value = 0)
     on.exit(progress$close())
     
-    if(exampledata()==TRUE) {
-      #Load the example file names if we want to load the example data
-      file_data <- examplefiles()
-    } else {
-      file_data <- contig_file()
-    }
+    file_data <- contig_file()
     
     n <- nrow(file_data)
     
@@ -410,32 +369,19 @@ importBAMOutput <- function(id){
 }
 
 #CallModule function
-importBAM <- function(input, output, session, BAM_file, load.data, exampledata){
+importBAM <- function(input, output, session, BAM_file, load.data){
   ns <- session$ns
   #Reactive event for loading contig data
   imported.bam <- eventReactive(load.data(),{
-    if (exampledata() == FALSE){
-      req(BAM_file())
-    }
     
-    # examplefiles <- function() {
-    #   example_names <- c("example1.fasta","example2.fasta","example3.fasta","example4.fasta")
-    #   example_file <- sapply(example_names, function(x) system.file("extdata", x, package = "viromeBrowser"))
-    #   example_data <- data.frame("name"=example_names, "datapath"=example_file)
-    #   return(example_data)
-    # }
+    req(BAM_file())
     
     # Create a Progress object
     progress <- shiny::Progress$new()
     progress$set(message = "Loading BAM files", value = 0)
     on.exit(progress$close())
     
-    if(exampledata()==TRUE) {
-      #Load the example file names if we want to load the example data
-      file_data <- examplefiles()
-    } else {
-      file_data <- BAM_file()
-    }
+    file_data <- BAM_file()
     
     #2 progress steps per file
     n <- nrow(file_data)*2
@@ -516,33 +462,20 @@ importMetadataOutput <- function(id){
 }
 
 #CallModule function
-importMetadata <- function(input, output, session, metadata_file, load.data, exampledata){
+importMetadata <- function(input, output, session, metadata_file, load.data){
   
   #Reactive event for loading metadata data
   imported.metadata <- eventReactive(load.data(),{
-    if (exampledata() == FALSE){
-      req(metadata_file())
-    }
     
-    examplefiles <- function() {
-      example_name <- "example_metadata.txt"
-      example_file <- system.file("extdata", "example_metadata.tsv", package = "viromeBrowser")
-      example_data <- data.frame("name"=example_name, "datapath"=example_file)
-      return(example_data)
-    }
+    req(metadata_file())
     
     # Create a Progress object
     progress <- shiny::Progress$new()
     progress$set(message = "Loading metadata file", value = 0)
     on.exit(progress$close())
     
-    if(exampledata()==TRUE) {
-      #Load the example file names if we want to load the example data
-      file_data <- examplefiles()
-    } else {
-      file_data <- metadata_file()
-    }
-    
+    file_data <- metadata_file()
+
     data <- fread(as.character(file_data[,"datapath"]))
     
     #First column should be the file.id key value
@@ -554,11 +487,6 @@ importMetadata <- function(input, output, session, metadata_file, load.data, exa
     #Remove all columns with only one value
     data <- data[,data[ ,sapply(.SD, function(x) length(unique(x)) > 1)], with=F]
 
-    # #Look for dates and transform them to dates
-    # can_convert <- names(data)[which(!is.na(as.Date(unlist(data[1,]),"%m/%d/%Y")))]
-    # replacement_dates <- lapply(can_convert, function(x) data[,as.Date(get(x), "%m/%d/%Y")])
-    # data[,(can_convert) := replacement_dates]
-    
     #Turn all character columns into factors
     character_columns <- names(data)[which(data[ ,sapply(.SD, class)]=="character")]
     replacement_factors <- data[,character_columns, with=F][,lapply(.SD, as.factor)]
