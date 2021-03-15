@@ -8,4 +8,4 @@
 - The option for loading example data is removed, because adding BAM files to the example data will make it too large for the package to handle.
 - The interactive heatmap menu is made more intuitive by showing the tables with values that are being filtered.
 - The used filters are now shown next to the contig table.
-- The contig table is extended down to show more contigs and is not searchable.
+- The contig table is extended down to show more contigs and is now searchable.
