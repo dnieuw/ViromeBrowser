@@ -91,7 +91,7 @@ seqinfo.tab <- tabItem(
   				fluidRow(
   					box(width = 12,
   					  column(12, align="center",
-  					    rbokehOutput("orfplot", width = "80%", height = "600px")
+  					    plotlyOutput("orfplot", width = "80%", height = "600px")
   					  )
   					)
   				)

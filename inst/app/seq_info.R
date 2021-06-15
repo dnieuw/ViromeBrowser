@@ -29,24 +29,45 @@ find.ORFs <- function(contig, stopcodon = c("TAA","TGA","TAG")){
 	return(allorfs)
 }
 
-plot.orfs <- function(orfs,lim){
-	plotdata <- as.data.table(ranges(orfs))
-	limits.x <- c(-5000,max(end(orfs))+5000)
-	limits.y <- c(-2.5,2.5)
-	plotdata <- orfs[width(orfs)>=lim]
-	Frame <- mcols(plotdata)$frame
-	p <- figure(width = 800, height = 400, tools = c("pan","wheel_zoom","reset"), toolbar_location = "above", lod_threshold = 1000, xlim=limits.x, ylim=limits.y) %>%
-	ly_annular_wedge(data = as.data.table(ranges(plotdata)),
-		x = start+width/2, y = 0, inner_radius = width/2, outer_radius = width/1.95,
-		start_angle = sapply(as.character(mcols(plotdata)$frame), function(x)switch(x,"-1"=pi,"-2"=pi,"-3"=pi,"+1"=0,"+2"=0,"+3"=0)),
-		end_angle = sapply(as.character(mcols(plotdata)$frame), function(x)switch(x,"-1"=0,"-2"=0,"-3"=0,"+1"=pi,"+2"=pi,"+3"=pi)),
-		direction = "anticlock", color = Frame, alpha = 1, lname = "wedges") %>%
-		set_palette(discrete_color = pal_color(c(	"#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"))) %>%
-		y_axis(visible = F) %>% x_axis(label = "Stopcodon Position") %>%
-		tool_wheel_zoom("width") %>%
-		tool_pan("width") %>%
-		tool_box_zoom()
-	return(p)
+plot.orfs <- function(orfs, lim) {
+  plotdata <- as.data.table(ranges(orfs))
+  plotdata$frame <- as.numeric(mcols(orfs)$frame)
+  plotdata <- plotdata[width>lim]
+  plotdata$legend <- !duplicated(plotdata$frame)
+  
+  fig <- plot_ly()
+  
+  frame_color_palette <- c("#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33")
+  
+  for(i in seq(nrow(plotdata))){
+    
+    arc_coords <- arc(plotdata$start[i], plotdata$end[i], c(0,ifelse(plotdata$frame[i]>0,1,-1)), 10)
+    color <- frame_color_palette[ifelse(plotdata$frame[i]>0,plotdata$frame[i]+3,plotdata$frame[i]+4)]
+    
+    fig <- add_trace(fig,
+                     type = "scatter",
+                     opacity = 0.5,
+                     name = paste(plotdata$frame[i], "Frame"),
+                     legendgroup = paste(plotdata$frame[i], "Frame"),
+                     x = arc_coords$x,
+                     y = arc_coords$y,
+                     mode = "lines",
+                     line = list(width = 4, shape = "spline", color = color),
+                     showlegend = plotdata$legend[i],
+                     hoverinfo="skip"
+    )
+  }
+  
+  padding <- max(plotdata$start,plotdata$end) * 0.1
+  
+  fig <- layout(fig, 
+                xaxis = list(zeroline=F,
+                             range=c(-padding,max(plotdata$start,plotdata$end)+padding)),
+                yaxis = list(
+                  showticklabels=F,
+                  range=c(-max(plotdata$width)/2-(max(plotdata$width)*0.1),max(plotdata$width)/2)+(max(plotdata$width)*0.1))
+  )
+  return(fig)
 }
 
 plot.AAfreq <- function(sequence) {
@@ -212,18 +233,11 @@ output$contig.summary <- renderUI({
 	return(fields)
 })
 
-output$orfplot <- renderRbokeh({
+output$orfplot <- renderPlotly({
   orfs <- get.contig.orfs()
 	selected <- get.contig.current()
 	
-	if (all(c("hit.start","hit.end")%in%colnames(selected))) {
-	  if (all(!is.na(c(selected$hit.start,selected$hit.end)))) {
-	    return(
-	      plot.orfs(orfs,input$orf.size.cutoff) %>% ly_abline(v=selected$hit.start) %>% ly_abline(v=selected$hit.end)
-	    )
-	  }
-	}
-	return(plot.orfs(orfs,input$orf.size.cutoff))
+	return(plot_orfs(orfs, input$orf.size.cutoff))
 })
 
 output$orf.size.cutoff <- renderUI({

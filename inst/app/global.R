@@ -1,7 +1,7 @@
 library(ggplot2)
 library(shiny)
 library(shinydashboard)
-library(rbokeh)
+library(plotly)
 library(Biostrings)
 library(Rsamtools)
 library(data.table)
