@@ -29,7 +29,24 @@ find.ORFs <- function(contig, stopcodon = c("TAA","TGA","TAG")){
 	return(allorfs)
 }
 
-plot.orfs <- function(orfs, lim) {
+plot_orfs <- function(orfs, lim) {
+  
+  anglesArc <- function (v, theta) {
+    theta.OX <- ifelse(v[2] >= 0, acos(v[1]), 2 * pi - acos(v[1]))
+    angs <- c(theta.OX - theta, theta.OX + theta)
+    return(angs)
+  }
+  
+  arc <-  function (start, end, dir, res) {
+    c <- c(start+(end - start)/2,0)
+    r <- (end - start)/2
+    angles <- anglesArc(dir,  pi/2)
+    seqang <- seq(angles[1], angles[2], length = res)
+    x <- c[1] + r * cos(seqang)
+    y <- c[2] + r * sin(seqang)
+    return(data.table(x,y))
+  }
+  
   plotdata <- as.data.table(ranges(orfs))
   plotdata$frame <- as.numeric(mcols(orfs)$frame)
   plotdata <- plotdata[width>lim]
