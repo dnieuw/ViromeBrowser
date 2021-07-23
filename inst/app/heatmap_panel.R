@@ -87,17 +87,41 @@ calculate_LCA <- function(contig_data){
 
 annot.heatmap.data <- reactive({
   validate(
-    need(!is.null(selected_data()),"Loading selected data..")
+    need(!is.null(selected_merged()),"No data...")
   )
 
-  merged_data <- calculate_LCA(selected_data())
+  merged_data <- selected_merged()
   
-  #Remove columns not needed for plotting
-  merged_data[,c("target","hit.start","hit.end","length.homology","identity","evalue(-log10)","bitscore","fraction.homology"):=NULL]
-  #Unique rows to avoid counting contigs twice
-  merged_data <- unique(merged_data)
+  x_axis <- req(input$metadata_stratify_selection)
+  y_axis <- req(input$annotation_stratify_selection)
+  fill <- req(input$annotation_count_selection)
   
-  if(nrow(merged_data)==0) return(NULL)
+  #Switch annotation based on slider
+  switch (fill,
+          countcontig = {
+            fill <- "Count contig"
+            #Sum contig by stratification
+            merged_data <- merged_data[,.N, by=list(get(x_axis),get(y_axis))]
+            names(merged_data) <- c(x_axis, y_axis, fill)
+          },
+          abs_readcount = {
+            fill <- "Absolute read count"
+            #Sum reads per stratification
+            merged_data <- merged_data[,sum(readcount), by=list(get(x_axis),get(y_axis))]
+            names(merged_data) <- c(x_axis, y_axis, fill)
+          },
+          scaled_readcount = {
+            fill <- "Total scaled read count"
+            #Sum reads per stratification and scale by contig length
+            merged_data <- merged_data[,sum(readcount/totalreadcount), by=list(get(x_axis),get(y_axis))]
+            names(merged_data) <- c(x_axis, y_axis, fill)
+          }
+  )
+  
+  if (input$logtransform) {
+    #Log10 transform inplace
+    merged_data[,(fill):=log10(.SD), .SDcols = fill]
+  }
   
   return(merged_data)
 })
@@ -105,7 +129,7 @@ annot.heatmap.data <- reactive({
 annot.heatmap.data.debounced <- annot.heatmap.data %>% debounce(1000)
 
 #Heatmap based on selected input
-output$annot.heatmap <- renderRbokeh({
+output$annot.heatmap <- renderPlotly({
 
   validate(
     need(!is.null(annot.heatmap.data.debounced()),"No data for currently selected filters..")
@@ -114,86 +138,70 @@ output$annot.heatmap <- renderRbokeh({
   x_axis <- req(input$metadata_stratify_selection)
   y_axis <- req(input$annotation_stratify_selection)
   fill <- req(input$annotation_count_selection)
-
-  #Switch annotation based on slider
-  switch (fill,
-    countcontig = {
-      #Sum contig by stratification
-      plotdata <- annot.heatmap.data.debounced()[,.N, by=list(get(x_axis),get(y_axis))]
-      names(plotdata) <- c(x_axis, y_axis, fill)
-    },
-    abs_readcount = {
-      #Sum reads per stratification
-      plotdata <- annot.heatmap.data.debounced()[,sum(readcount), by=list(get(x_axis),get(y_axis))]
-      names(plotdata) <- c(x_axis, y_axis, fill)
-    },
-    scaled_readcount = {
-      #Sum reads per stratification and scale by contig length
-      plotdata <- annot.heatmap.data.debounced()[,sum(readcount/totalreadcount), by=list(get(x_axis),get(y_axis))]
-      names(plotdata) <- c(x_axis, y_axis, fill)
-    }
-  )
   
-  if (input$logtransform) {
-    #Log10 transform inplace
-    plotdata[,(fill):=log10(.SD), .SDcols = fill]
+  plotdata <- annot.heatmap.data.debounced()
+  
+	fig <- plot_ly(source="heat_plot",
+	               type="heatmap",
+	               x=~plotdata[[1]],
+	               y=~plotdata[[2]],
+	               z=~plotdata[[3]],
+	               hovertemplate=paste0(x_axis,": %{x}<br>",
+	                                    y_axis,": %{y}<br>",
+	                                    fill,": %{z}<extra></extra>"))
+	
+	fig <- layout(fig,
+	              xaxis = list(fixedrange = TRUE, title=x_axis),
+	              yaxis = list(fixedrange = TRUE,title=y_axis),
+	              legend=list(title=list(text=fill)))
+	
+	fig <- config(fig, 
+	              displaylogo = FALSE,
+	              modeBarButtons = list(list("toImage")))
+	
+	if(!is.null(selected_heatmap$annot)){
+	  
+	  plotdata$annot <- selected_heatmap$annot$annot
+    
+	  fig <- add_annotations(fig,
+	                         x=~plotdata[[1]],
+	                         y=~plotdata[[2]],
+	                         text = plotdata$annot,
+	                         showarrow = FALSE,
+	                         font = list(size=14,
+	                                     color="white"))
+	}
+
+	return(fig)
+})
+
+selected_heatmap <- reactiveValues(df=NULL,annot=NULL)
+
+observeEvent(event_data("plotly_click", source = "heat_plot", priority = "event"), {
+  clickData <- event_data("plotly_click", source = "heat_plot")
+  
+  #Check if this is the first click, then create empty annotation overlay
+  if(is.null(selected_heatmap$annot)){
+    plotdata <- annot.heatmap.data.debounced()
+    plotdata$annot <-  rep("",nrow(plotdata))
+    selected_heatmap$annot <- plotdata
   }
   
-  x.axis <- annot.heatmap.data.debounced()[,unique(get(x_axis))]
-	y.axis <- annot.heatmap.data.debounced()[,unique(get(y_axis))]
-	
-	plotdata <- plotdata[order(get(x_axis),get(y_axis))]
-	
-	switch (fill,
-	        countcontig = {
-	          hover <- list()
-	          colnames(plotdata)[colnames(plotdata)==fill] <- "Contig count"
-	          figure(width = 600, height = 600,
-	                 xlab = x_axis, ylab = y_axis,
-	                 tools = c("box_select", "save"),
-	                 toolbar_location = "above") %>%
-	            ly_crect(data = plotdata, x=get(x_axis), y=get(y_axis), color=`Contig count`, hover=list(x_axis=get(x_axis),y_axis=get(y_axis),'Contig count'=`Contig count`), lname = "rects") %>%
-	            x_range(x.axis) %>%
-	            theme_axis("x", major_label_orientation = 45) %>%
-	            theme_grid("x", grid_line_alpha = 0) %>%
-	            y_range(y.axis) %>%
-	            theme_grid("y", grid_line_alpha = 0) %>%
-	            set_palette(continuous_color = pal_gradient(cols = rev(RColorBrewer::brewer.pal(11, "Spectral"))), pal_size(min=0,max=2500)) %>%
-	            tool_box_select(callback = shiny_callback("heatmap.select"),ref_layer = "rects")
-	         },
-	        abs_readcount = {
-	          colnames(plotdata)[colnames(plotdata)==fill] <- "Absolute read count"
-	          figure(width = 600, height = 600,
-	                 xlab = x_axis, ylab = y_axis,
-	                 tools = c("box_select", "save"),
-	                 toolbar_location = "above") %>%
-	            ly_crect(data = plotdata, x=get(x_axis), y=get(y_axis), color=`Absolute read count`, hover=list(x_axis=get(x_axis),y_axis=get(y_axis),'Absolute read count'=`Absolute read count`), lname = "rects") %>%
-	            x_range(x.axis) %>%
-	            theme_axis("x", major_label_orientation = 45) %>%
-	            theme_grid("x", grid_line_alpha = 0) %>%
-	            y_range(y.axis) %>%
-	            theme_grid("y", grid_line_alpha = 0) %>%
-	            set_palette(continuous_color = pal_gradient(cols = rev(RColorBrewer::brewer.pal(11, "Spectral"))), pal_size(min=0,max=2500)) %>%
-	            tool_box_select(callback = shiny_callback("heatmap.select"),ref_layer = "rects")
-	          },
-	        scaled_readcount = {
-	          colnames(plotdata)[colnames(plotdata)==fill] <- "Total scaled read count"
-	          figure(width = 600, height = 600,
-	                 xlab = x_axis, ylab = y_axis,
-	                 tools = c("box_select", "save"),
-	                 toolbar_location = "above") %>%
-	            ly_crect(data = plotdata, x=get(x_axis), y=get(y_axis), color=`Total scaled read count`, hover=list(x_axis=get(x_axis),y_axis=get(y_axis),'Total scaled read count'=`Total scaled read count`), lname = "rects") %>%
-	            x_range(x.axis) %>%
-	            theme_axis("x", major_label_orientation = 45) %>%
-	            theme_grid("x", grid_line_alpha = 0) %>%
-	            y_range(y.axis) %>%
-	            theme_grid("y", grid_line_alpha = 0) %>%
-	            set_palette(continuous_color = pal_gradient(cols = rev(RColorBrewer::brewer.pal(11, "Spectral"))), pal_size(min=0,max=2500)) %>%
-	            tool_box_select(callback = shiny_callback("heatmap.select"),ref_layer = "rects")
-	          }
-	)
-	
-	
+  #Check if not already in selected list
+  if(!any(selected_heatmap$df$x == clickData$x & selected_heatmap$df$y == clickData$y)){
+    selected_heatmap$df <- rbind(selected_heatmap$df,clickData)
+    selected_heatmap$annot$annot[clickData$pointNumber+1] <- "X"
+  } else {
+    selected_heatmap$df <- selected_heatmap$df[!(selected_heatmap$df$x == clickData$x & selected_heatmap$df$y == clickData$y),]
+    selected_heatmap$annot$annot[clickData$pointNumber+1] <- ""
+  }
+}, ignoreNULL = T)
+
+#Reset when deselect is pressed
+observeEvent(c(input$deselect_button,
+               annot.heatmap.data.debounced()), {
+  selected_heatmap$df <- NULL
+  selected_heatmap$annot <- NULL
 })
 
 merged_annotationdata <- reactive({
@@ -247,12 +255,23 @@ selected_metadata <- reactive({
   return(metadata)
 })
 
-selected_data <- reactive({
+selected_merged <- reactive({
   validate(
     need(!is.null(selected_metadata()),"No contigs for selected metadata..."),
     need(!is.null(selected_annotationdata()),"No contigs for selected contig filters...")
   )
-  return(merge.data.table(selected_metadata(),selected_annotationdata(), by = "file.id"))
+  merged_data <- merge.data.table(selected_metadata(),selected_annotationdata(), by = "file.id")
+  
+  merged_data <- calculate_LCA(merged_data)
+  
+  #Remove columns for specific annotation
+  merged_data[,c("target","hit.start","hit.end","length.homology","identity","evalue(-log10)","bitscore","fraction.homology"):=NULL]
+  #Unique rows to remove duplicated annotations after LCA determination
+  merged_data <- unique(merged_data)
+  
+  if(nrow(merged_data)==0) return(NULL)
+  
+  return(merged_data)
 })
 
 #Generate a table with contig info
@@ -272,7 +291,7 @@ output$contig_table <- DT::renderDataTable({
   searchCols[names(default_values)] <- default_values
   names(searchCols) <- NULL
   searchCols <- c(list(NULL), searchCols)
-  activate <- input$annotation_stratify_selection#No idea why, but this is needed to have the heatmap show up right away
+  #activate <- input$annotation_stratify_selection#No idea why, but this is needed to have the heatmap show up right away
   plotdata <- contig_data[,filter, with=F]
   rownames(plotdata) <- contig_data[,list(unique_names=paste(contig.id,seq(.N),sep="#")),contig.id][,unique_names]
   DT::datatable(plotdata,
@@ -312,22 +331,19 @@ output$metadata_table <- DT::renderDataTable({
 
 #Selected fields from heatmap
 heatmap.selected <- reactive({
-  selection_data <- annot.heatmap.data()
+  selection_data <- selected_merged()
   
-  if (is.null(input$heatmap.select)) {
+  if (nrow(selected_heatmap$df)==0) {
     selected_rows <- selection_data
     setkey(selected_rows, "contig.id")
   } else {
+    
     x_axis <- req(input$metadata_stratify_selection)
     y_axis <- req(input$annotation_stratify_selection)
     
-    selected <- selection_data[,.N, by=list(get(x_axis),get(y_axis))]
-    names(selected) <- c(x_axis, y_axis, 'N')
-    selected <- selected[order(get(x_axis),get(y_axis))]
-    selected <- selected[input$heatmap.select+1]
+    selection_data <- selection_data[get(x_axis)%in%selected_heatmap$df$x & get(y_axis)%in%selected_heatmap$df$y]
     
-    selected_rows <- selection_data[get(x_axis) %in% selected[[1]] & get(y_axis) %in% selected[[2]]]
-    setkey(selected_rows, "contig.id")
+    setkey(selection_data, "contig.id")
   }
-  return(selected_rows)
+  return(selection_data)
 })
