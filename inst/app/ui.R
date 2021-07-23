@@ -22,7 +22,8 @@ heatmap.tab <- tabItem(
 	                 )
 	          ),
 	          column(10, align="center",
-	                 withSpinner(rbokehOutput("annot.heatmap", width = "50%", height = "800px"))
+	                 withSpinner(plotlyOutput("annot.heatmap", width = "50%", height = "800px")),
+	                 actionButton("deselect_button","Deselect")
 	          )
 	        )
 	    )
