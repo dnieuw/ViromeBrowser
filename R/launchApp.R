@@ -4,9 +4,9 @@
 #' An application for viewing virome annotation files
 #'
 #' @import shiny
+#' @rawNamespace import(plotly, except = last_plot)
 #' @import ggplot2
 #' @import shinydashboard
-#' @import rbokeh
 #' @import Biostrings
 #' @import Rsamtools
 #' @import data.table

@@ -146,14 +146,14 @@ output$annot.heatmap <- renderPlotly({
 	               x=~plotdata[[1]],
 	               y=~plotdata[[2]],
 	               z=~plotdata[[3]],
+	               colorbar = list(title = fill),
 	               hovertemplate=paste0(x_axis,": %{x}<br>",
 	                                    y_axis,": %{y}<br>",
 	                                    fill,": %{z}<extra></extra>"))
 	
 	fig <- layout(fig,
 	              xaxis = list(fixedrange = TRUE, title=x_axis),
-	              yaxis = list(fixedrange = TRUE,title=y_axis),
-	              legend=list(title=list(text=fill)))
+	              yaxis = list(fixedrange = TRUE,title=y_axis))
 	
 	fig <- config(fig, 
 	              displaylogo = FALSE,

@@ -22,7 +22,7 @@ heatmap.tab <- tabItem(
 	                 )
 	          ),
 	          column(10, align="center",
-	                 withSpinner(plotlyOutput("annot.heatmap", width = "50%", height = "800px")),
+	                 withSpinner(plotlyOutput("annot.heatmap", width = "50%", height = "700px")),
 	                 actionButton("deselect_button","Deselect")
 	          )
 	        )

@@ -83,7 +83,7 @@ knitr::include_graphics("image2.png")
 knitr::include_graphics("image3.png")
 ```
 
-- Interactive heatmap: The interactive heatmap can be used to select certain samples or annotations. Click and drag on the heatmap to make a selection. By default all of the tiles are selected. To deselect, click and drag in the heatmap in an area without tiles.
+- Interactive heatmap: The interactive heatmap can be used to select certain samples or annotations. Click on the heatmap to make a selection. If you do not select any tiles it is treated as if all tiles are selected. To deselect, click the deselect button.
 
 After filtering and making a selection of annotations and samples, the next step is to either download the selected contigs or further inspect the contigs in the "selected sequence annotations" menu.
 
