@@ -2,7 +2,7 @@
 This is an update of the viromeBrowser from 1.1.0 to 1.2.0 because the code from the rbokeh package has been completely replaced
   
 ### Test environments
-* local Windows 10, R 3.6.3, R 4.0.1
+* local Windows 10, R 3.6.3, R 4.1.0
 * local Ubuntu 18.04.4 LTS, R 3.6.3
 * local CentOS Linux release 7.9.2009, R 3.6.0
 
