@@ -25,8 +25,3 @@ The viromeBrowser package provides a single function to launch the virome browse
 viromeBrowser()
 }
 
-\examples{
-\donttest{
-viromeBrowser()
-}
-}
