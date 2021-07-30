@@ -12,8 +12,6 @@ There were no WARNINGS, ERRORs or NOTES.
 
 There can be an error or note if bioconductor packages RSamtools and Biostrings cannot be automatically installed.
 
-An error occurs when --run-donttest is performed, which is not possible to do, because it is an interactive app.
-
 There was a note from CRAN regarding the deprecation of the viromebrowser package because of the deprecated 'rbokeh' package. This update removes that dependency.
 
 ### Downstream dependencies
