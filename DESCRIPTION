@@ -1,7 +1,7 @@
 Package: viromeBrowser
 Type: Package
 Title: Virome Sequencing Analysis Result Browser
-Version: 1.1.0
+Version: 1.2.0
 Authors@R: person("David", "Nieuwenhuijse", email = "d.nieuwenhuijse@erasmusmc.nl", role = c("aut", "cre"))
 Description: Experiments in which highly complex virome sequencing data is generated are difficult to visualize and unpack for a person without programming experience. 
     After processing of the raw sequencing data by a next generation sequencing (NGS) processing pipeline the usual output consists of contiguous sequences (contigs) in fasta format and an annotation file linking the 
@@ -10,14 +10,14 @@ Description: Experiments in which highly complex virome sequencing data is gener
     annotation quality thresholds can be set to filter contigs from the annotation files. Further inspection of selected contigs can be done in the form of automatic open
     reading frame (ORF) detection. Separate contigs and/or separate ORFs can be downloaded in nucleotide or amino acid format for further analysis.
 Depends:
-    R (>= 3.4)
+    R (>= 3.4), R (< 4.2)
 Imports:
     shiny (>= 1.3.2),
 		shinyWidgets,
 		ggplot2,
+		plotly,
 		shinydashboard,
 		DT,
-		rbokeh,
 		Biostrings,
 		Rsamtools,
 		data.table,

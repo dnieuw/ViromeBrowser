@@ -1,8 +1,8 @@
 ## Package update
-This is an update of the viromeBrowser from 1.0.0 to 1.1.0 because I added a lot of extra functions to the app and restructured the layout
+This is an update of the viromeBrowser from 1.1.0 to 1.2.0 because the code from the rbokeh package has been completely replaced
   
 ### Test environments
-* local Windows 10, R 3.6.3
+* local Windows 10, R 3.6.3, R 4.0.1
 * local Ubuntu 18.04.4 LTS, R 3.6.3
 * local CentOS Linux release 7.9.2009, R 3.6.0
 
@@ -12,7 +12,9 @@ There were no WARNINGS, ERRORs or NOTES.
 
 There can be an error or note if bioconductor packages RSamtools and Biostrings cannot be automatically installed.
 
-I have removed the lazydata statement from the DESCRIPTION file, which gave a NOTE with the package curator, but not with my local devtools::check().
+An error occurs when --run-donttest is performed, which is not possible to do, because it is an interactive app.
+
+There was a note from CRAN regarding the deprecation of the viromebrowser package because of the deprecated 'rbokeh' package. This update removes that dependency.
 
 ### Downstream dependencies
 There are currently no downstream dependencies for this package
